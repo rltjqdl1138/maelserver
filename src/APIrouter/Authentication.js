@@ -137,8 +137,14 @@ const sendMessage = (req, res)=>{
     })()
 }
 
-const getCountryCode = (req, res)=>
-    res.json({success:true, list:CountryCodeList})
+const getCountryCode = (req, res)=>{
+    console.log(Object.keys(CountryCodeList))
+    const list = Object.keys(CountryCodeList).map(item=>{
+        return {code:item, name:CountryCodeList[item]}
+    })
+    console.log(list)
+    res.json({success:true, list})
+}
 
 
 //Authentication Middleware
