@@ -8,9 +8,9 @@ const fs = require('fs');
 const app = express();
 const mainapp = require('./src/index')
 
+// Express Modules
 app.use(bodyParser.urlencoded({extended: false}))
 app.use(bodyParser.json())
-
 app.use('/', mainapp)
 
 
@@ -24,12 +24,12 @@ try{
     };
 
     // Create an HTTPS service.
-    https.createServer(options, app).listen(4001, ()=>
-        console.log('Mael Streaming Server on port \x1b[97m4001\x1b[0m with SSL Authentication')
+    https.createServer(options, app).listen(4000, ()=>
+        console.log('Mael Streaming Server on port \x1b[97m4000\x1b[0m')
     );
     // Create an HTTP service.
-    http.createServer(app).listen(4000,()=>
-        console.log('Mael Streaming Server on port \x1b[97m4000\x1b[31m without SSL Authentication\x1b[0m')
+    http.createServer(app).listen(3000,()=>
+        console.log('Mael Streaming Server on port \x1b[97m3000\x1b[0m')
     );
 
 }catch(e){

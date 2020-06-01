@@ -1,4 +1,5 @@
 const router = require('express').Router()
+const axios = require('axios')
 const jwt = require('../Crypto/jwt')
 const db = new (require('../Database/account'))('localhost', 2424, 'Auth')
 const {MessageService} = require('../Services/naverCloud')
@@ -24,9 +25,8 @@ const SignCheck = (req, res)=>{
             return res.json({success:true})
     }
 }
-
 const SignIn = (req, res)=>{
-    const {id, password, platform} = req.body;
+    const {id, password, platform, fbtoken} = req.body;
     
     //Check id
     if(!id || typeof id !== 'string' || id===''){
@@ -40,11 +40,22 @@ const SignIn = (req, res)=>{
             //Check Password
             if(!password || typeof password !== 'string'){
                 console.log(`[Sign In] Fault ID:${id} missing password`)
-                return res.status(400).json({success:false, msg:'password'})}
-        case 'facebook':
-        case 'google':
-        case 'apple':
+                return res.status(400).json({success:false, msg:'password'})
+            }
             break
+
+        case 'facebook':
+            //Check Token
+            if(!fbtoken || typeof fbtoken !== 'string'){
+                console.log(`[Sign In] Fault ID:${id} missing facebook token`)
+                return res.status(400).json({success:false, msg:'fbtoken'})
+            }
+            break
+
+        case 'google':
+            //break
+        case 'apple':
+            //break
         default:
             console.log(`[Sign In] Fault ID:${id} missing platform`)
             return res.status(400).json({success:false, msg:'platform'})
@@ -55,22 +66,46 @@ const SignIn = (req, res)=>{
 
         // Get User data
         const result = await db.getUserByID(id, platform)
-        if(!result.success || !result.data)
+        if(!result.success){
+            console.log(`[Sign In] Fault ID:${id} no data`)
             return res.status(400).json(result)
-
-        //Check password is matched
-        else if(hash !== result.data.password){
-            console.log(`[Sign In] Fault ID:${id} platform:${platform}`)
-            return res.status(400).json({success:false, msg:'password'})
         }
 
         // Create JWT
-        const payload = {id:result.data.id, name:result.data.name, platform}
-        const token = await jwt.code(payload)
-        res.json({success:true, data:{...payload, token}})
+        console.log('token?')
+        const payload = result.data ? {id:result.data.id, name:result.data.name, platform} : null
+        const token = payload ? await jwt.code(payload) : null
+
+        console.log(payload)
+        console.log(token)
+        if(!token)
+            return res.json({success:false})
+        switch(platform){
+            case 'original':
+                //Check password is matched
+                if(hash !== result.data.password){
+                    console.log(`[Sign In] Fault ID:${id} platform:${platform}`)
+                    return res.status(400).json({success:false, msg:'password'})
+                }
+                break;
+            case 'facebook':
+                try{
+                    //Check facebook token
+                    const URL = `https://graph.facebook.com/me?access_token=${payload.fbtoken}`
+                    await axios.get(URL)
+                }catch(e){
+                    console.log('facebook token Authentication error')
+                    return res.json({success:false, data : null})
+                }
+                break;
+            default:
+                return res.json({success:false, msg:'platform'})
+        }
         console.log(`[Sign In] Success ID:${id} platform:${platform}`)
+        return res.json({success:true, data:{...payload, token}})
     })()
 }
+
 const messageCheck = (req, res)=>{
     const {mobile, countryCode, key} = req.query
     switch(true){
@@ -86,6 +121,7 @@ const messageCheck = (req, res)=>{
         return res.json({success: token?true:false, token})
     })()
 }
+
 const sendMessage = (req, res)=>{
     const {mobile, countryCode} = req.body
     // Request Check
