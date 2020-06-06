@@ -1,16 +1,13 @@
 const router = require('express').Router()
 const APIRouter = require('./APIrouter')
+const Music = require('./Music')
 
 router.get('/',(req, res)=>{
-    console.log('hello')
     res.json({msg:'welcom mael'})
 })
 
 router.use('/api', APIRouter )
-
-router.get('/music',(req, res)=>{
-    res.send('welcom music')
-})
+router.use('/music', Music)
 router.get('/image',(req, res)=>{
     res.send('welcom image')
 })
