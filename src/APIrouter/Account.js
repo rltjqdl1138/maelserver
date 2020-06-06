@@ -14,8 +14,31 @@ const checkID = (req, res) =>{
             res.json({success: true, overlaped: result.data ? true : false})
     })()
 }
-const SignupOriginal = async (payload) => {
-    {success:true}
+const SignupOriginal = async ({id, password, name, mobile, countryCode, birthday, mobileInToken, countryCodeInToken}) => {
+    try{
+        //Check overlaped
+        const check = await db.getAccountByID(id, 'original')
+        if(!check.success || check.data)
+            throw Error('overlaped')
+        
+        // Create User
+        const user = await db.registerUser({name, mobile, countryCode, birthday})
+        if(!user.success)
+            throw Error('user')
+
+        // Create Account
+        // TODO: hash password
+        const hash = password
+        const account = await db.registerAccount({id, password:hash, platform:'original', UID:user.UID})
+        if(!account.success)
+            throw Error('Account')
+        
+        // Sign token
+        const token = await jwt.code({id, name})
+        return {success:true, id, name, token}
+    }catch(e){
+        return {success:false, msg:e}
+    }
 }
 const SignupFacebook = async (payload) => {
     const {id, name, fbtoken} = payload
@@ -54,7 +77,7 @@ const Signup = (req,res)=>{
         switch(platform){
             case 'original':
                 //Check mobile Authentication is verified
-                result = mobileInToken && countryCodeInToken && mobileInToken == mobile && countryCodeInToken === countryCode ?
+                result = mobileInToken && countryCodeInToken && mobileInToken === mobile && countryCodeInToken === countryCode ?
                     await SignupOriginal({id, password, name, mobile, countryCode, birthday, mobileInToken, countryCodeInToken}) :
                     {success:false, msg:'token'}
                 break
@@ -71,7 +94,10 @@ const Signup = (req,res)=>{
     })()
 }
 
+// Need no token
 router.get('/checkid', checkID)
+
+// Need token
 router.use('/*', jwt.middleware)
 router.post('/register', Signup)
 
