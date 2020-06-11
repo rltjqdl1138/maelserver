@@ -72,12 +72,9 @@ const SignIn = (req, res)=>{
         }
 
         // Create JWT
-        console.log('token?')
         const payload = result.data ? {id:result.data.id, name:result.data.name, platform} : null
         const token = payload ? await jwt.code(payload) : null
 
-        console.log(payload)
-        console.log(token)
         if(!token)
             return res.json({success:false})
         switch(platform){
@@ -91,7 +88,7 @@ const SignIn = (req, res)=>{
             case 'facebook':
                 try{
                     //Check facebook token
-                    const URL = `https://graph.facebook.com/me?access_token=${payload.fbtoken}`
+                    const URL = `https://graph.facebook.com/me?access_token=${fbtoken}`
                     await axios.get(URL)
                 }catch(e){
                     console.log('facebook token Authentication error')

@@ -10,12 +10,10 @@ const getMusicByID = async (req, res)=>{
         return res.status(404).send('Not found')
     
     return res.send(resource.data.uri)
-    
-
-
 }
 
 const getMusicByURI = async (req, res)=>{
+    console.log('aa')
     const uri = url.parse(req.url).pathname
     console.log(req.url)
     res.writeHead(200, {"Content-Type": "audio/mp3"})

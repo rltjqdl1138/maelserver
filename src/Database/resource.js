@@ -6,18 +6,24 @@ class ResourceDB extends db{
         super(host, port, usage)
     }
     // Category
-    getGroup = async (id, group)=>{
+    getGroup = async (id, group, type)=>{
         const {dbSession} = this
-        console.log(id, group)
         if( group===undefined || typeof group !== 'number' || group < 0 || group > 3)
             return {success:false}
         try{
             switch(typeof id){
-                case 'string':
-                    return { success:true, data:await dbSession.query(`Select * from ${GROUP[group]} where ${UPPERID[group]}=:ID`,{params:{ID:parseInt(id)}}).all() }
+                case 'string':console.log('this1?')
+                    return { success:true, data: (await dbSession.query(`Select * from ${GROUP[group]} where ${UPPERID[group]}=:ID`,{params:{ID:parseInt(id)}}).all()) }
+                
                 case 'number':
                     return { success:true, data:await dbSession.query(`Select * from ${GROUP[group]} where ${UPPERID[group]}=:ID`,{params:{ID:id}}).all() }
+                
                 default:
+                    if(type==='1')
+                        return { success:true, data:await dbSession.query(`Select * from ${GROUP[group]} where theme>0`).all() }
+                    else if(type === '2')
+                        return { success:true, data:await dbSession.query(`Select * from ${GROUP[group]} where theme=0`).all() }
+                    
                     return { success:true, data:await dbSession.query(`Select * from ${GROUP[group]}`).all() }
             }
         }catch(e){
@@ -56,6 +62,8 @@ class ResourceDB extends db{
         typeof id === 'number'
         try{
             const response = await this.dbSession.query(`MATCH {class: Album, as: album, where: (ID = '${id}')}.out('E') {as: music} RETURN music`).all()
+            if(response.length === 0)
+                return {success:true, data:[]}
             const IDS = response.map(({music}) => '#'+music.cluster+':'+music.position )
             const result = await this.dbSession.query(`Select from Music [${String(IDS)}]`).all()
             return {success:true, data:result}
@@ -64,46 +72,34 @@ class ResourceDB extends db{
         }
     }
     matchAlbumByMusic = async (id)=>{
-        typeof id === 'number'
         try{
             const response = await this.dbSession.query(`MATCH {class: Music, as: music, where: (MID = '${id}')}.in('E') {as: album} RETURN album`).all()
-            const IDS = response.map(({album}) => '#'+album.cluster+':'+album.position )
-            const result = await this.dbSession.query(`Select from Album [${String(IDS)}]`).all()
+            if(response.length === 0)
+                return {success:true, data:[]}
+            let query = 'Select * from Album where '
+            response.map(({album}) => query = query + '@rid=#'+album.cluster+':'+album.position+ ' or')
+            const result = await this.dbSession.query(query.slice(0,query.length-3)).all()
+
             return {success:true, data:result}
         }catch(e){
-            return {success: false}
+            return {success: false, data:[]}
         }
     }
 
     // Sound Data
-    getAlbumGroupList = async(id)=>{
-        const {dbSession} = this
-        let albumGroup = null
-        switch(typeof id){
-            case 'list':
-                break;
-            case 'string':
-                albumGroup = await dbSession.query('Select * from AlbumGroup where ID=:ID', {params:{ID:id}}).all()
-                break;
-            default:
-                albumGroup = await dbSession.query('Select * from AlbumGroup').all()
-                break;
-        }
-        return {success:true, data:albumGroup}
-    }
 
-    getAlbumTitle = async(id)=>{
+    getAlbumByID = async(id)=>{
         const {dbSession} = this
-        let albumTitle = null
+        let album = null
         switch(typeof id){
-            case 'list':
-                break;
+            case 'number':
+                album = await dbSession.query('Select * from Album where ID=:ID',{params:{ID:id}}).all()
             case 'string':
-                albumTitle = await dbSession.query('Select * from Album where ID=ID',{params:{ID:id}}).all()
+                album = await dbSession.query('Select * from Album where ID=:ID',{params:{ID:id}}).all()
             default:
-                albumTitle = await dbSession.query('Select * from Album').all()
+                album = await dbSession.query('Select * from Album').all()
         }
-        return {success:true, data:albumTitle}
+        return {success:true, data:album}
     }
 
     getMusicListByAlbumID = async(album)=>{
@@ -114,7 +110,7 @@ class ResourceDB extends db{
     
     getMusicByID = async(MID)=>{
         const {dbSession} = this
-        const music = await dbSession.query('Select * from Music where MID=:MID',{params:{MID}}).one()
+        const music = await dbSession.query('Select * from Music where MID=:MID',{params:{MID}}).all()
         return {success:true, data:music}
     }
 
@@ -123,24 +119,50 @@ class ResourceDB extends db{
         const music = await dbSession.query('Select * from Music').all()
         return {success:true, data:music}
     }
+    moveTheme = async (ID, _theme)=>{
+        const {dbSession} = this
+        try{
+            const theme = _theme ? _theme : (await dbSession.query('select * from LowGroup where theme > 0').all()).length+1
+            await dbSession.command(`update LowGroup set theme=:theme where ID=:ID`, {params:{ID, theme}}).all()
+            return {success:true}
+        }catch(e){
+            return {success:false}
+        }
+    }
     updateCategory = async (ID, _group, payload)=>{
         const {dbSession} = this
         const group = _group && typeof _group === 'string' ? parseInt(_group) : _group
         let result;
         switch(group){
             case 0:
-                result = dbSession.command(`update HighGroup set title=:title, info=:info where ID=:ID`,{params:{ID, ...paylaod}}).all(); break;
+                result = dbSession.command(`update HighGroup set title=:title, info=:info where ID=:ID`,{params:{ID, ...payload}}).all(); break;
             case 1:
-                result = dbSession.command(`update MiddleGroup set title=:title, info=:info where ID=:ID`,{params:{ID, ...paylaod}}).all(); break;
+                result = dbSession.command(`update MiddleGroup set title=:title, info=:info where ID=:ID`,{params:{ID, ...payload}}).all(); break;
             case 2:
-                result = dbSession.command(`update LowGroup set title=:title, subTitle=:subTitle, designType=:designType where ID=:ID`,{params:{ID, ...paylaod}}).all(); break;
+                result = dbSession.command(`update LowGroup set title=:title, subTitle=:subTitle, designType=:designType, theme=:theme where ID=:ID`,{params:{ID, ...payload}}).all(); break;
             case 3:
-                result = dbSession.command(`update Album set title=:title, artist=:artist, info=:info where ID=:ID`,{params:{ID, ...paylaod}}).all(); break;
+                result = dbSession.command(`update Album set title=:title, artist=:artist, info=:info where ID=:ID`,{params:{ID, ...payload}}).all(); break;
             default:
                 return {success:false}
         }
         return {success:true, data: result}
+    }
 
+    deleteCategory = async (_ID, _group)=>{
+        const {dbSession} = this
+        if(!_ID || _ID === "") return {success:false}
+        const group = _group && typeof _group === 'string' ? parseInt(_group) : _group
+        const ID = _ID && typeof _ID === 'string' ? parseInt(_ID) : _ID
+        switch(group){
+            case 0:
+            case 1:
+            case 2:
+                return {success:true, data: await dbSession.command(`Delete from ${GROUP[group]} where ID=:ID`, {params:{ID}}).all() }
+            case 3:
+                return {success:true, data: await dbSession.command(`Delete Vertex from Album where ID=:ID`, {params:{ID}}).all() }
+            default:
+                return {success:false}
+        }
     }
 
     registerCategory = async(_group, _upperID) =>{
@@ -155,7 +177,7 @@ class ResourceDB extends db{
                 query = `insert into MiddleGroup set ID=sequence('mdIDseq').next(), HID=${upperID}, title='New Category'`
                 break;
             case 2:
-                query = `insert into LowGroup set ID=sequence('loIDseq').next(), MID=${upperID}, title='New Category', designType=0`
+                query = `insert into LowGroup set ID=sequence('loIDseq').next(), MID=${upperID}, title='New Category', designType=0, theme=0`
                 break;
             case 3:
                 query = `create Vertex Album set ID=sequence('AlbumIDseq').next(), LID=${upperID}, title='New Album', artist='Mael'`
@@ -164,10 +186,18 @@ class ResourceDB extends db{
                 return {success:false}
         }
         const result = await this.dbSession.command(query).all()
-        return {result:true, data:result}
-
+        return {success:true, data:result}
     }
+    updateMusic = async(payload)=>{
+        const {dbSession} = this
+        const {MID, title, category} = payload
+        if(!MID || !title || !category)
+            return {success:false}
 
+        const query = `Update Music set title=:title, category=:category, info=:info, songCreator=:songCreator, lyricCreator=:lyricCreator, author=:author, publisher=:publisher where MID=:MID`
+        const result = await dbSession.command(query,{params:payload}).all()
+        return {success:true, data:result}
+    }
     registerMusic = async(payload)=>{
         const {dbSession} = this
         const {title, uri, category} = payload
@@ -179,9 +209,18 @@ class ResourceDB extends db{
     }
     //Image Data
     connectMusicToAlbum = async(MID, albumID)=>{
+        console.log(`Connect ${MID} to ${albumID}`)
         if(typeof MID !== 'number' || typeof albumID !== 'number')
             return {success:false}
         const query = `Create Edge From (Select From Album where ID=${albumID}) TO (Select From Music where MID=${MID})`
+        const result = await this.dbSession.command(query).all()
+        return {success:true, data:result}
+    }
+    disconnectMusicToAlbum = async (MID, albumID)=>{
+        console.log(`Disconnect ${MID} to ${albumID}`)
+        if(typeof MID !== 'number' || typeof albumID !== 'number')
+            return {success:false}
+        const query = `Delete EDGE from (Select from Album where ID=${albumID}) to (Select from Music where MID=${MID})`
         const result = await this.dbSession.command(query).all()
         return {success:true, data:result}
     }
