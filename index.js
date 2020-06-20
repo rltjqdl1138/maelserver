@@ -25,11 +25,11 @@ try{
 
     // Create an HTTPS service.
     https.createServer(options, app).listen(4001, ()=>
-        console.log('Mael Streaming Server on port \x1b[97m4000\x1b[0m')
+        console.log('Mael https Streaming Server on port \x1b[97m4001\x1b[0m')
     );
     // Create an HTTP service.
     http.createServer(app).listen(4000,()=>
-        console.log('Mael Streaming Server on port \x1b[97m3000\x1b[0m')
+        console.log('Mael http Streaming Server on port \x1b[97m4000\x1b[0m')
     );
 
 }catch(e){

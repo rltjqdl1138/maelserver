@@ -94,13 +94,63 @@ const Signup = (req,res)=>{
     })()
 }
 
+const getAccount = async (req, res)=>{
+    const {id, platform} = req.decoded
+    try{
+        const user = await db.getUserByID(id, platform)
+        if(!user.success || !user.data)
+            return res.json({success:true})
+        let ID;
+        switch(platform){
+            case 'facebook':
+                ID = '페이스북 아이디';break
+            case 'google':
+                ID = '구글 아이디';break
+            case 'apple':
+                ID = '애플 아이디';break
+            default:
+                ID = id
+        }
+        const payload = {
+            id: ID,
+            stateID:user.data.stateID,
+            createDate:'2020-05-30'
+        }
+        res.json({success:true, data:payload})
+    }
+    catch(e){
+        console.log(e)
+        res.json({success:true, data:{}})
+    }
+}
+
+const getUser = async (req, res)=>{
+    const {id, platform} = req.decoded
+    try{
+        const user = await db.getUserByID(id, platform)
+        if(!user.success || !user.data)
+            return res.json({success:true})
+        const payload = {
+            name:user.data.name ? user.data.name : 'N/A',
+            birthday:user.data.birthday ? user.data.birthday : 'N/A',
+            mobile:user.data.mobile ? user.data.mobile : 'N/A'
+        }
+        res.json({success:true, data:payload})
+    }
+    catch(e){
+        console.log(e)
+        res.json({success:true, data:{}})
+    }
+}
+
 // Need no token
 router.get('/checkid', checkID)
 
 // Need token
 router.use('/*', jwt.middleware)
 router.post('/register', Signup)
-
+router.get('/account',getAccount)
+router.get('/user',getUser)
 module.exports = router
 
 /*
