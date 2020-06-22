@@ -207,7 +207,6 @@ class ResourceDB extends db{
         const result = await dbSession.command(query,{params:payload}).one()
         return {success:true, data:result}
     }
-    //Image Data
     connectMusicToAlbum = async(MID, albumID)=>{
         console.log(`Connect ${MID} to ${albumID}`)
         if(typeof MID !== 'number' || typeof albumID !== 'number')
@@ -224,6 +223,7 @@ class ResourceDB extends db{
         const result = await this.dbSession.command(query).all()
         return {success:true, data:result}
     }
+    
 }
 
 
