@@ -33,7 +33,6 @@ const SignIn = (req, res)=>{
         console.log(`[Sign In] Fault missing ID`)
         return res.status(400).json({success:false, msg:'ID'})
     }
-
     //Check Platform
     switch(platform){
         case 'original':
@@ -70,11 +69,9 @@ const SignIn = (req, res)=>{
             console.log(`[Sign In] Fault ID:${id} no data`)
             return res.status(400).json(result)
         }
-
         // Create JWT
         const payload = result.data ? {id:result.data.id, name:result.data.name, platform} : null
         const token = payload ? await jwt.code(payload) : null
-
         if(!token)
             return res.json({success:false})
         switch(platform){
@@ -135,11 +132,9 @@ const sendMessage = (req, res)=>{
 }
 
 const getCountryCode = (req, res)=>{
-    console.log(Object.keys(CountryCodeList))
-    const list = Object.keys(CountryCodeList).map(item=>{
-        return {code:item, name:CountryCodeList[item]}
-    })
-    console.log(list)
+    const list = Object.keys(CountryCodeList).map(item=>(
+        {code:item, name:CountryCodeList[item]}
+    ))
     res.json({success:true, list})
 }
 

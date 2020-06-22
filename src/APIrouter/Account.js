@@ -42,6 +42,7 @@ const SignupOriginal = async ({id, password, name, mobile, countryCode, birthday
 }
 const SignupFacebook = async (payload) => {
     const {id, name, fbtoken} = payload
+    console.log(id,name,fbtoken)
     const URL = `https://graph.facebook.com/me?access_token=${fbtoken}`
     try{
         //Check facebook token
@@ -71,6 +72,7 @@ const Signup = (req,res)=>{
     const {id, password, name, mobile, countryCode, birthday, platform, fbtoken} = req.body;
     const mobileInToken = req.decoded ? req.decoded.mobile : null
     const countryCodeInToken = req.decoded ? req.decoded.countryCode : null
+    console.log('[Sign up test]', id, name, platform)
     let result;
 
     (async()=>{

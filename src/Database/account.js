@@ -115,7 +115,6 @@ class AccountDB extends db{
         try{
             // Check overlaped : id
             const check = await dbSession.query(`Select * from ${AccountClass[platform]} where id=:id`,{params:{id}}).all()
-            console.log(check)
             if(check.length !== 0)
                 throw Error('overlaped')
 
@@ -148,15 +147,13 @@ class AccountDB extends db{
             const check = mobile ? await dbSession.query('Select * from User where mobile=:mobile',{params:{mobile}}).all() : null
             if(mobile && check.length !== 0)
                 throw Error('overlaped')
-
             // Create User
             const a = await dbSession.command(
                 `Insert into User set UID=sequence('userIDseq').next(), name=:name, mobile=:mobile, countryCode=:countryCode, birthday=:birtyday, email=:email, stateID=:stateID`,
-                {params:{UID, name, mobile, countryCode, birthday, email, stateID}}
+                {params:{name, mobile, countryCode, birthday, email, stateID}}
             ).all()
-            console.log(a)
-            console.log(`[Database] Create User ${UID}`)
-            return {success:true, UID}
+            console.log(`[Database] Create User ${a[0].UID}`)
+            return {success:true, UID:a[0].UID}
         }catch(e){
             return {success:false}
         }
