@@ -143,7 +143,6 @@ class AccountDB extends db{
         const {dbSession} = this
         const {name, mobile, countryCode, birthday, email} = _payload
         const stateID = 0
-        const UID = 3;
         try{
             // Check overlaped : mobile
             const check = mobile ? await dbSession.query('Select * from User where mobile=:mobile',{params:{mobile}}).all() : null
@@ -152,7 +151,7 @@ class AccountDB extends db{
 
             // Create User
             const a = await dbSession.command(
-                'Insert into User set UID=:UID, name=:name, mobile=:mobile, countryCode=:countryCode, birthday=:birtyday, email=:email, stateID=:stateID',
+                `Insert into User set UID=sequence('userIDseq').next(), name=:name, mobile=:mobile, countryCode=:countryCode, birthday=:birtyday, email=:email, stateID=:stateID`,
                 {params:{UID, name, mobile, countryCode, birthday, email, stateID}}
             ).all()
             console.log(a)
