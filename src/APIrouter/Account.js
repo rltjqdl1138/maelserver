@@ -2,6 +2,7 @@ const router = require('express').Router()
 const jwt = require('../Crypto/jwt')
 const db = new (require('../Database/account'))('localhost', 2424, 'Account')
 const axios = require('axios')
+const { json } = require('body-parser')
 
 
 const checkID = (req, res) =>{
@@ -131,9 +132,9 @@ const getUser = async (req, res)=>{
         if(!user.success || !user.data)
             return res.json({success:true})
         const payload = {
-            name:user.data.name ? user.data.name : 'N/A',
-            birthday:user.data.birthday ? user.data.birthday : 'N/A',
-            mobile:user.data.mobile ? user.data.mobile : 'N/A'
+            name:user.data.name ? user.data.name : '',
+            birthday:user.data.birthday ? user.data.birthday : '',
+            mobile:user.data.mobile ? user.data.mobile : ''
         }
         res.json({success:true, data:payload})
     }
@@ -143,6 +144,39 @@ const getUser = async (req, res)=>{
     }
 }
 
+const changeInfo = async (req, res)=>{
+    if(!req.decoded)
+        return res.json({success:false})
+    const {id, platform} = req.decoded
+    const key = req.url.split('/')[2]
+    let value = req.body[key]
+
+    const account = await db.getAccountByID(id, platform)
+    if(!account.success || !account.data)
+        return res.json({success:false})
+
+    // Pre processing
+    switch(key){
+        case 'mobile':
+            const decoded = await jwt.decode(req.body.mobileToken)
+            if(decoded.mobile !== req.body.mobile || decoded.countryCode !== req.body.countryCode)
+                return {success:false}
+            break;
+
+        case 'password':
+            const hash = req.body.oldPassword
+            if(hash !== account.data.password)
+                return res.json({success:false, isnotCorrect:true})
+            //todo: hashing
+            
+            value = value
+            break;
+
+        default:
+    }
+    const result = await db.updateUser(account.data.UID, {key, value})
+    return res.json(result)
+}
 // Need no token
 router.get('/checkid', checkID)
 
@@ -151,6 +185,7 @@ router.use('/*', jwt.middleware)
 router.post('/register', Signup)
 router.get('/account',getAccount)
 router.get('/user',getUser)
+router.put('/user/*',changeInfo)
 module.exports = router
 
 /*

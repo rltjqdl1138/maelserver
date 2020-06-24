@@ -158,6 +158,30 @@ class AccountDB extends db{
             return {success:false}
         }
     }
+    updateUser = async(UID, payload)=>{
+        const {dbSession} = this
+        const {key, value} = payload
+        try{
+            console.log(key, value)
+            switch(key){
+                case 'mobile':
+                    console.log('here')
+                    const mobile = await dbSession.query(`Select * from User where mobile=:mobile`,{params:{mobile:value}}).all()
+                    console.log(mobile.length)
+                    if(mobile.length > 0)
+                        return {success:false, overlaped:true}
+                default:
+                    break;
+            }
+            console.log('dd')
+            await dbSession.command(`Update User set ${key}=:value where UID=${UID}`,{params:{value}}).all()
+            console.log(`[Database] Update User ${UID}:  <${key}> ${value}`)
+            return {success:true}
+        }catch(e){
+            console.log(e)
+            return {success:false}
+        }
+    }
 }
 
 /*
