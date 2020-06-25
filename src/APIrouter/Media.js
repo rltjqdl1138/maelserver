@@ -3,11 +3,15 @@ const jwt = require('../Crypto/jwt')
 const db = new (require('../Database/resource'))('localhost', 2424, 'Media')
 const multiparty = require('multiparty')
 const fs = require('fs')
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+const ffmpeg = require('fluent-ffmpeg');
+ffmpeg.setFfmpegPath(ffmpegPath);
+
+const __Resource = __dirname+'/../../resource'
 
 const basicRouter = async (req, res)=>{
-    const result = await db.matchAlbumByMusic(1)
-    //const result = await db.matchMusicByAlbum(1)
-    return res.json(result)
+    console.log('basic')
+    return res.json({success:true})
 }
 const getTheme = async (req, res)=>{
     const {type} = req.query
@@ -135,7 +139,7 @@ const updateMusic = async (req, res)=>{
         console.log("[Media] Write Music file :" + filename);
         payload.uri = uri
 
-        const writeStream = fs.createWriteStream('./resource/_music/'+filename);
+        const writeStream = fs.createWriteStream('./resource/music/'+filename);
         writeStream.filename = filename
         part.pipe(writeStream);
 
@@ -177,28 +181,24 @@ const updateMusic = async (req, res)=>{
 const registerMusic = async (req,res)=>{
     const form = new multiparty.Form();
     const payload = {title:'', songCreator:'', lyricCreator:'', author:'', publisher:'', info:'', albumList:'', uri:'', category:''} 
-
+    let filename = '';
     // Get values from each form field
-    form.on('field',(name,value)=>
-        payload[name] === '' && typeof value==='string' ? payload[name]=value : null
-    )
+    form.on('field',(name,value) => payload[name] === '' && typeof value==='string' ? payload[name]=value : null)
     
     form.on('part',(part)=>{
         const uri = part.filename.replace(/ /gi,"").replace(".mp3","")
-        const filename = uri+'.mp3'
-        filename ? part.resume() : null
+        uri ? part.resume() : null
+        filename = uri+'.mp3'
         payload.uri = uri
-        console.log("[Media] Write Music file :" + filename);
 
-        const writeStream = fs.createWriteStream('./resource/_music/'+filename);
+        const writeStream = fs.createWriteStream(__Resource+'/music/'+filename);
         writeStream.filename = filename
         part.pipe(writeStream);
 
         part.on('end',function(){
-            console.log(filename+' Part read complete');
+            console.log(`[Music File] ${filename} is uploaded`);
             writeStream.end();
         });
-
     });
 
     // all uploads are completed
@@ -210,6 +210,7 @@ const registerMusic = async (req,res)=>{
             await db.connectMusicToAlbum(dbResult.data.MID, item)
         })
         res.status(200).redirect('/')
+        trimMusic(filename)
     });
 
     // track progress
@@ -219,6 +220,14 @@ const registerMusic = async (req,res)=>{
 
     form.parse(req);
  
+}
+const trimMusic = (filename)=>{
+    ffmpeg(__Resource+'/music/'+filename)
+        .inputOptions('-t 30')
+        .output(__Resource+'/sample/'+filename)
+        .on('end', ()=> console.log(`[Music File] ${filename}'s Sample is created`))
+        .on('error',(e)=> console.log(`[Error] ${filename}'s Sample is not Created`))
+        .run()
 }
 
 const registerCategory = async(req, res)=>{
