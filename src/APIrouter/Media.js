@@ -219,8 +219,8 @@ const registerMusic = async (req,res)=>{
     });
 
     form.parse(req);
- 
 }
+
 const trimMusic = (filename)=>{
     ffmpeg(__Resource+'/music/'+filename)
         .inputOptions('-t 30')

@@ -12,7 +12,7 @@ class ResourceDB extends db{
             return {success:false}
         try{
             switch(typeof id){
-                case 'string':console.log('this1?')
+                case 'string':
                     return { success:true, data: (await dbSession.query(`Select * from ${GROUP[group]} where ${UPPERID[group]}=:ID`,{params:{ID:parseInt(id)}}).all()) }
                 
                 case 'number':
@@ -208,7 +208,7 @@ class ResourceDB extends db{
         return {success:true, data:result}
     }
     connectMusicToAlbum = async(MID, albumID)=>{
-        console.log(`Connect ${MID} to ${albumID}`)
+        console.log(`[Category] Connect ${MID} to ${albumID}`)
         if(typeof MID !== 'number' || typeof albumID !== 'number')
             return {success:false}
         const query = `Create Edge From (Select From Album where ID=${albumID}) TO (Select From Music where MID=${MID})`
@@ -216,7 +216,7 @@ class ResourceDB extends db{
         return {success:true, data:result}
     }
     disconnectMusicToAlbum = async (MID, albumID)=>{
-        console.log(`Disconnect ${MID} to ${albumID}`)
+        console.log(`[Category] Disconnect ${MID} to ${albumID}`)
         if(typeof MID !== 'number' || typeof albumID !== 'number')
             return {success:false}
         const query = `Delete EDGE from (Select from Album where ID=${albumID}) to (Select from Music where MID=${MID})`

@@ -30,7 +30,7 @@ const SignIn = (req, res)=>{
     
     //Check id
     if(!id || typeof id !== 'string' || id===''){
-        console.log(`[Sign In] Fault missing ID`)
+        //console.log(`[Sign In] Fault missing ID`)
         return res.status(400).json({success:false, msg:'ID'})
     }
     //Check Platform
@@ -38,7 +38,7 @@ const SignIn = (req, res)=>{
         case 'original':
             //Check Password
             if(!password || typeof password !== 'string'){
-                console.log(`[Sign In] Fault ID:${id} missing password`)
+                //console.log(`[Sign In] Fault ID:${id} missing password`)
                 return res.status(400).json({success:false, msg:'password'})
             }
             break
@@ -46,7 +46,7 @@ const SignIn = (req, res)=>{
         case 'facebook':
             //Check Token
             if(!fbtoken || typeof fbtoken !== 'string'){
-                console.log(`[Sign In] Fault ID:${id} missing facebook token`)
+                //console.log(`[Sign In] Fault ID:${id} missing facebook token`)
                 return res.status(400).json({success:false, msg:'fbtoken'})
             }
             break
@@ -56,7 +56,7 @@ const SignIn = (req, res)=>{
         case 'apple':
             //break
         default:
-            console.log(`[Sign In] Fault ID:${id} missing platform`)
+            //console.log(`[Sign In] Fault ID:${id} missing platform`)
             return res.status(400).json({success:false, msg:'platform'})
     };
     (async()=>{
@@ -66,7 +66,7 @@ const SignIn = (req, res)=>{
         // Get User data
         const result = await db.getUserByID(id, platform)
         if(!result.success){
-            console.log(`[Sign In] Fault ID:${id} no data`)
+            //console.log(`[Sign In] Fault ID:${id} no data`)
             return res.status(400).json(result)
         }
         // Create JWT
@@ -78,7 +78,7 @@ const SignIn = (req, res)=>{
             case 'original':
                 //Check password is matched
                 if(hash !== result.data.password){
-                    console.log(`[Sign In] Fault ID:${id} platform:${platform}`)
+                    //console.log(`[Sign In] Fault ID:${id} platform:${platform}`)
                     return res.status(400).json({success:false, msg:'password'})
                 }
                 break;
@@ -88,14 +88,14 @@ const SignIn = (req, res)=>{
                     const URL = `https://graph.facebook.com/me?access_token=${fbtoken}`
                     await axios.get(URL)
                 }catch(e){
-                    console.log('facebook token Authentication error')
+                    //console.log('facebook token Authentication error')
                     return res.json({success:false, data : null})
                 }
                 break;
             default:
                 return res.json({success:false, msg:'platform'})
         }
-        console.log(`[Sign In] Success ID:${id} platform:${platform}`)
+        console.log(`[Sign In] ID:${id} platform:${platform}`)
         return res.json({success:true, data:{...payload, token}})
     })()
 }

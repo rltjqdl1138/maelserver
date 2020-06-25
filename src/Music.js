@@ -17,6 +17,7 @@ const getMusicByID = async (req, res)=>{
 const getMusicByURI = async (req, res)=>{
     console.log(req.decoded)
     const uri = url.parse(req.url).pathname
+    console.log(uri)
     try{
         const path = req.decoded ? await checkFileAsync(uri) : await checkSampleAsync(uri)
         streamFile(res, path)
