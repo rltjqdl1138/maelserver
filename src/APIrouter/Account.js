@@ -15,6 +15,18 @@ const checkID = (req, res) =>{
             res.json({success: true, overlaped: result.data ? true : false})
     })()
 }
+
+const checkForgetID = (req, res) =>{
+    const {name, birthday} = req.query;
+    if(!name || typeof name !== 'string' || !birthday || typeof birthday !== 'string')
+        return res.json({success:false, msg:'input'});
+    (async()=>{
+        const result = await db.getUserByNameAndBirth(name, birthday)
+        return !result.success ? res.json({success:false}) :
+            res.json({success: true, length: result.data.length})
+    })()
+}
+
 const SignupOriginal = async ({id, password, name, mobile, countryCode, birthday, mobileInToken, countryCodeInToken}) => {
     try{
         //Check overlaped
@@ -144,6 +156,20 @@ const getUser = async (req, res)=>{
     }
 }
 
+const forgetID = async (req, res)=>{
+    if(!req.decoded)
+        return res.json({success:false})
+    const {name, birthday} = req.query
+    const {mobile, countryCode} = req.decoded
+    const response = await db.getAccountByMobile(mobile, countryCode)
+    if(!response.success || !response.data || !response.data.id)
+        return res.json({success:true})
+    else if(response.data.id)
+        return res.json({success:true, id:response.data.id})
+    return res.json({success:false})
+}
+
+
 const changeInfo = async (req, res)=>{
     if(!req.decoded)
         return res.json({success:false})
@@ -177,8 +203,28 @@ const changeInfo = async (req, res)=>{
     const result = await db.updateUser(account.data.UID, {key, value})
     return res.json(result)
 }
+
+
+const resetPassword = async (req, res)=>{
+    if(!req.decoded)
+        return res.json({success:false})
+    const {mobile, countryCode} = req.decoded
+    const {id, password} = req.body
+
+    const account = await db.getAccountByMobile(mobile, countryCode)
+    if(!account.success || !account.data || account.data.id !== id)
+        return res.json({success:false})
+
+    const hash = password
+    //todo: hashing
+    const result = await db.updateUser(account.data.UID, {key:'password', value:hash})
+    return res.json(result)
+}
+
+
 // Need no token
-router.get('/checkid', checkID)
+router.get('/check/id', checkID)
+router.get('/check/forgetid', checkForgetID)
 
 // Need token
 router.use('/*', jwt.middleware)
@@ -186,6 +232,8 @@ router.post('/register', Signup)
 router.get('/account',getAccount)
 router.get('/user',getUser)
 router.put('/user/*',changeInfo)
+router.get('/forgetid', forgetID)
+router.put('/forgetid', resetPassword)
 module.exports = router
 
 /*

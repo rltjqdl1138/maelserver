@@ -7,7 +7,6 @@ class AccountDB extends db{
     constructor(host, port, usage){
         super(host, port, usage)
     }
-
     getAccountByID = async (id, platform)=>{
         const {dbSession} = this
         const account = await dbSession.query(`Select * from ${AccountClass[platform]} where id=:id`,{params:{id}}).all()
@@ -91,6 +90,12 @@ class AccountDB extends db{
         return {success:true, data:{...account[0], ...user[0]}}
     }
 
+    getUserByNameAndBirth = async(name, birthday)=>{
+        const {dbSession} = this
+        // GET User Information
+        const user = await dbSession.query('Select * from User where name=:name and birthday=:birthday',{params:{name, birthday}}).all()
+        return {success:true, data:user}
+    }
     getUserByMobile = async(mobile, countryCode)=>{
         const {dbSession} = this
         // GET User Information
@@ -149,7 +154,7 @@ class AccountDB extends db{
                 throw Error('overlaped')
             // Create User
             const a = await dbSession.command(
-                `Insert into User set UID=sequence('userIDseq').next(), name=:name, mobile=:mobile, countryCode=:countryCode, birthday=:birtyday, email=:email, stateID=:stateID`,
+                `Insert into User set UID=sequence('userIDseq').next(), name=:name, mobile=:mobile, countryCode=:countryCode, birthday=:birthday, email=:email, stateID=:stateID`,
                 {params:{name, mobile, countryCode, birthday, email, stateID}}
             ).all()
             console.log(`[Database] Create User ${a[0].UID}`)
@@ -162,18 +167,21 @@ class AccountDB extends db{
         const {dbSession} = this
         const {key, value} = payload
         try{
-            console.log(key, value)
             switch(key){
+                // * Update Account *
+                case 'password':
+                    await dbSession.command(`Update Account set ${key}=:value where UID=${UID}`,{params:{value}}).all()
+                    console.log(`[Database] Update Account ${UID}:  <${key}> ${value}`)
+                    return {success:true}
+
+                // * Check overlaped *
                 case 'mobile':
-                    console.log('here')
                     const mobile = await dbSession.query(`Select * from User where mobile=:mobile`,{params:{mobile:value}}).all()
-                    console.log(mobile.length)
                     if(mobile.length > 0)
                         return {success:false, overlaped:true}
                 default:
                     break;
             }
-            console.log('dd')
             await dbSession.command(`Update User set ${key}=:value where UID=${UID}`,{params:{value}}).all()
             console.log(`[Database] Update User ${UID}:  <${key}> ${value}`)
             return {success:true}
