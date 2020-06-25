@@ -9,13 +9,11 @@ const base = (req, res) => {
 }
 
 const getImageByURI = async (req, res)=>{
-    console.log('1')
-    const uri = url.parse(req.url).pathname
+    const uri = url.parse(req.url).pathname.replace('.jpeg','')
     try{
         const path = await checkFileAsync(uri)
         streamFile(res, path)
     }catch(e){
-        console.log('here')
         console.log(e)
         return res.status(404).send('not found')
     }
