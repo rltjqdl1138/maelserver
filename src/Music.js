@@ -17,7 +17,6 @@ const getMusicByID = async (req, res)=>{
 const getMusicByURI = async (req, res)=>{
     console.log(req.decoded)
     const uri = url.parse(req.url).pathname
-    console.log(uri)
     try{
         const path = req.decoded ? await checkFileAsync(uri) : await checkSampleAsync(uri)
         streamFile(res, path)
@@ -44,7 +43,7 @@ const checkFileAsync = (uri) => new Promise((resolve, reject) =>{
     const dir = __Resource+'/music'+uri+'.mp3'
     fs.stat(dir, (err,stats) => err ? reject(err) : resolve(dir) )
 })
-router.use(jwt.middleware)
+router.use('/*',jwt.middleware)
 router.get('/', getMusicByID)
 router.get('/*', getMusicByURI)
 module.exports = router
