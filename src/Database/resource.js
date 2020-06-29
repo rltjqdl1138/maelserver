@@ -64,8 +64,9 @@ class ResourceDB extends db{
             const response = await this.dbSession.query(`MATCH {class: Album, as: album, where: (ID = '${id}')}.out('E') {as: music} RETURN music`).all()
             if(response.length === 0)
                 return {success:true, data:[]}
-            const IDS = response.map(({music}) => '#'+music.cluster+':'+music.position )
-            const result = await this.dbSession.query(`Select from Music [${String(IDS)}]`).all()
+            let query = 'Select * from Music where '
+            response.map(({music}) => query = query + '@rid=#'+music.cluster+':'+music.position+ ' or')
+            const result = await this.dbSession.query(query.slice(0,query.length-3)).all()
             return {success:true, data:result}
         }catch(e){
             return {success: false}
@@ -88,32 +89,30 @@ class ResourceDB extends db{
 
     // Sound Data
 
+    //Get an Album By its ID
     getAlbumByID = async(id)=>{
         const {dbSession} = this
         let album = null
+        
         switch(typeof id){
             case 'number':
-                album = await dbSession.query('Select * from Album where ID=:ID',{params:{ID:id}}).all()
+                album = await dbSession.query('Select * from Album where ID=:ID',{params:{ID:id}}).all(); break;
             case 'string':
-                album = await dbSession.query('Select * from Album where ID=:ID',{params:{ID:id}}).all()
+                album = await dbSession.query('Select * from Album where ID=:ID',{params:{ID:id}}).all(); break;
             default:
                 album = await dbSession.query('Select * from Album').all()
         }
         return {success:true, data:album}
     }
-
-    getMusicListByAlbumID = async(album)=>{
-        const {dbSession} = this
-        const musics = await dbSession.query('Select * from Music where albumID=:albumID',{params:{albumID:album}}).all()
-        return {success:true, data:musics}
-    }
     
+    //Get a Music By its ID
     getMusicByID = async(MID)=>{
         const {dbSession} = this
         const music = await dbSession.query('Select * from Music where MID=:MID',{params:{MID}}).all()
         return {success:true, data:music}
     }
 
+    //Get all Musics
     getAllMusic = async()=>{
         const {dbSession} = this
         const music = await dbSession.query('Select * from Music').all()
@@ -194,17 +193,19 @@ class ResourceDB extends db{
         if(!MID || !title || !category)
             return {success:false}
 
-        const query = `Update Music set title=:title, category=:category, info=:info, songCreator=:songCreator, lyricCreator=:lyricCreator, author=:author, publisher=:publisher where MID=:MID`
-        const result = await dbSession.command(query,{params:payload}).all()
+        const nowTime = Date.now()
+        const query = `Update Music set title=:title, category=:category, info=:info, songCreator=:songCreator, lyricCreator=:lyricCreator, author=:author, publisher=:publisher, updatedTime=:updatedTime where MID=:MID`
+        const result = await dbSession.command(query,{params:{...payload, updatedTime:nowTime}}).all()
         return {success:true, data:result}
     }
     registerMusic = async(payload)=>{
         const {dbSession} = this
+        const nowTime = Date.now()
         const {title, uri, category} = payload
         if(!title || !uri || !category)
             return {success:false}
-        const query = `Create Vertex Music set MID=sequence('MusicIDseq').next(), title=:title, uri=:uri, category=:category, info=:info, songCreator=:songCreator, lyricCreator=:lyricCreator, author=:author, publisher=:publisher`
-        const result = await dbSession.command(query,{params:payload}).one()
+        const query = `Create Vertex Music set MID=sequence('MusicIDseq').next(), title=:title, uri=:uri, category=:category, info=:info, songCreator=:songCreator, lyricCreator=:lyricCreator, author=:author, publisher=:publisher, createdTime=:createdTime, updatedTime=:updatedTime`
+        const result = await dbSession.command(query,{params:{...payload, createdTime:nowTime, updatedTime:nowTime}}).one()
         return {success:true, data:result}
     }
     connectMusicToAlbum = async(MID, albumID)=>{

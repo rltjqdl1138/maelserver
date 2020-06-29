@@ -115,8 +115,8 @@ const getMusic = async (req,res)=>{
             dbResponse = await db.queryMusic()
     }
     const data = dbResponse.success && dbResponse.data.length > 0 ? dbResponse.data.map((
-        {MID, title, uri, category, songCreator, lyricCreator, author, publisher, info}) => ({
-        MID, title, uri, category, songCreator, lyricCreator, author, publisher, info })) : []
+        {MID, title, uri, category, songCreator, lyricCreator, author, publisher, info, createdTime, updatedTime}) => ({
+        MID, title, uri, category, songCreator, lyricCreator, author, publisher, info, createdTime, updatedTime })) : []
 
     return res.json({success:dbResponse.success, data})
 }
@@ -221,9 +221,9 @@ const registerMusic = async (req,res)=>{
     form.parse(req);
 }
 
-const trimMusic = (filename)=>{
+const trimMusic = (filename, second=30)=>{
     ffmpeg(__Resource+'/music/'+filename)
-        .inputOptions('-t 30')
+        .inputOptions('-t '+second)
         .output(__Resource+'/sample/'+filename)
         .on('end', ()=> console.log(`[Music File] ${filename}'s Sample is created`))
         .on('error',(e)=> console.log(`[Error] ${filename}'s Sample is not Created`))
