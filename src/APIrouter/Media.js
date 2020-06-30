@@ -238,7 +238,7 @@ const registerCategory = async(req, res)=>{
 }
 const updateCategory = async (req, res)=>{
     const {ID, group} = req.body
-    const categoryProperty = ['title', 'designType', 'subTitle', 'artist', 'info']
+    const categoryProperty = ['title', 'designType', 'subTitle', 'artist', 'info', 'uri']
     let payload = {}
     categoryProperty.map(item=>
         req.body[item] && req.body[item] !== '' ? payload[item] = req.body[item] : null
