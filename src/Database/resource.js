@@ -188,6 +188,7 @@ class ResourceDB extends db{
     updateCategory = async (ID, _group, payload)=>{
         const {dbSession} = this
         const group = _group && typeof _group === 'string' ? parseInt(_group) : _group
+        console.log(payload)
         let result;
         switch(group){
             case 0:
