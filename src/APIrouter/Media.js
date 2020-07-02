@@ -252,7 +252,6 @@ const updateCategory = async (req, res)=>{
     const {ID, group} = req.body
     const categoryProperty = ['title', 'designType', 'subTitle', 'artist', 'info', 'uri']
     let payload = {}
-    console.log(req.body)
     categoryProperty.map(item=>
         req.body[item] !== undefined && req.body[item] !== '' ? payload[item] = req.body[item] : null
     )
