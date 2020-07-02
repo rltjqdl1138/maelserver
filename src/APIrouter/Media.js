@@ -15,7 +15,6 @@ const basicRouter = async (req, res)=>{
 }
 const getTheme = async (req, res)=>{
     const {type} = req.query
-    console.log('[Media] Theme list')
     // TODO: not all group
     const _groupList = await db.getGroup(null, 2, type)
     const groupList = _groupList.success ? _groupList.data : []
@@ -46,10 +45,23 @@ const getTheme = async (req, res)=>{
 }
 
 const updateTheme = async (req, res)=>{
-    const {id, theme} = req.body
-    console.log(id, theme)
-    await db.moveTheme(id, theme)
-    res.json({success:true})
+    const {id, method} = req.body
+    console.log(id, method)
+    switch(method){
+        case 'append':
+            await db.registerTheme(id)
+            break
+        case 'remove':
+            await db.removeTheme(id)
+            break
+        case 'down':
+            await db.moveDownTheme(id)
+            break
+        case 'up':
+            await db.moveUpTheme(id)
+            break
+    }
+    return res.json({success:true})
 }
 
 const getCategory = async (req, res)=>{

@@ -20,7 +20,7 @@ class ResourceDB extends db{
                 
                 default:
                     if(type==='1')
-                        return { success:true, data:await dbSession.query(`Select * from ${GROUP[group]} where theme>0`).all() }
+                        return { success:true, data:await dbSession.query(`Select * from ${GROUP[group]} where theme>0 order by theme`).all() }
                     else if(type === '2')
                         return { success:true, data:await dbSession.query(`Select * from ${GROUP[group]} where theme=0`).all() }
                     
@@ -118,13 +118,70 @@ class ResourceDB extends db{
         const music = await dbSession.query('Select * from Music').all()
         return {success:true, data:music}
     }
-    moveTheme = async (ID, _theme)=>{
+    registerTheme = async (ID)=>{
         const {dbSession} = this
         try{
-            const theme = _theme ? _theme : (await dbSession.query('select * from LowGroup where theme > 0').all()).length+1
+            const check = await dbSession.query('select * from LowGroup where ID=:ID and theme=0', {params:{ID}}).all()
+            if(!check.length)
+                return {success:false}
+            const theme = (await dbSession.query('select * from LowGroup where theme > 0').all()).length+1
             await dbSession.command(`update LowGroup set theme=:theme where ID=:ID`, {params:{ID, theme}}).all()
+            console.log('success')
+            return {success:true, data:theme}
+        }catch(e){
+            return {success:false}
+        }
+    }
+    removeTheme = async ( ID )=>{
+        const {dbSession} = this
+        try{
+            const pivot = await dbSession.query('select theme from LowGroup where ID=:ID', {params:{ID}}).one()
+            if( !pivot || !pivot.theme )
+                return {success:false}
+            await dbSession.command(`update LowGroup set theme=0 where ID=:ID`, {params:{ID}}).all()
+            const list = await dbSession.query(`select * from LowGroup where theme > ${pivot.theme}`).all()
+            list.map( async(item)=>{
+                console.log(`${item.ID}'s theme ${item.theme}=>${item.theme-1}`)
+                await dbSession.command('update LowGroup set theme=:theme where ID=:ID', {params:{theme:item.theme-1, ID:item.ID}})
+            })
             return {success:true}
         }catch(e){
+            return {success:false}
+        }
+    }
+    moveUpTheme = async ( ID )=>{
+        const {dbSession} = this
+        try{
+            const changeOne = await dbSession.query('select theme from LowGroup where ID=:ID',{params:{ID}}).one()
+            console.log(changeOne)
+            if(!changeOne || !changeOne.theme)
+                return {success:false}
+            const replaceOne = await dbSession.command(`Update LowGroup set theme=${changeOne.theme} where theme=${changeOne.theme+1}`).all()
+            console.log(replaceOne)
+            if(!replaceOne.length)
+                return {success:false}
+            await dbSession.command(`Update LowGroup set theme=${changeOne.theme-1} where ID=:ID`,{params:{ID}})
+            console.log('done')
+            return {success:true}
+        }catch(e){
+            console.log(e)
+            return {success:false}
+        }
+    }
+
+    moveDownTheme = async ( ID )=>{
+        const {dbSession} = this
+        try{
+            const changeOne = await dbSession.query('select theme from LowGroup where ID=:ID',{params:{ID}}).one()
+            if(!changeOne || !changeOne.theme)
+                return {success:false}
+            const replaceOne = await dbSession.command(`Update LowGroup set theme=${changeOne.theme} where theme=${changeOne.theme-1}`).all()
+            if(!replaceOne.length)
+                return {success:false}
+            await dbSession.command(`Update LowGroup set theme=${changeOne.theme+1} where ID=:ID`,{params:{ID}})
+            return {success:true}
+        }catch(e){
+            console.log(e)
             return {success:false}
         }
     }
@@ -152,11 +209,29 @@ class ResourceDB extends db{
         if(!_ID || _ID === "") return {success:false}
         const group = _group && typeof _group === 'string' ? parseInt(_group) : _group
         const ID = _ID && typeof _ID === 'string' ? parseInt(_ID) : _ID
+        
         switch(group){
             case 0:
+                const middle = await dbSession.query(`select ID from MiddleGroup where HID=${ID}`).all()
+                if(middle.length)
+                    return {success:false}
+                await dbSession.command(`Delete from ${GROUP[group]} where ID=:ID`, {params:{ID}}).all()
+                console.log(`[Database] Delete High Group: ${ID}`)
+                return {success:true}
             case 1:
+                const low = await dbSession.query(`select ID from LowGroup where MID=${ID}`).all()
+                if(low.length)
+                    return {success:false}
+                await dbSession.command(`Delete from ${GROUP[group]} where ID=:ID`, {params:{ID}}).all()
+                console.log(`[Database] Delete Middle Group: ${ID}`)
+                return {success:true}
             case 2:
-                return {success:true, data: await dbSession.command(`Delete from ${GROUP[group]} where ID=:ID`, {params:{ID}}).all() }
+                const album = await dbSession.query(`select ID from Album where LID=${ID}`).all()
+                if(album.length)
+                    return {success:false}
+                await dbSession.command(`Delete from ${GROUP[group]} where ID=:ID`, {params:{ID}}).all()
+                console.log(`[Database] Delete Low Group: ${ID}`)
+                return {success:true}
             case 3:
                 return {success:true, data: await dbSession.command(`Delete Vertex from Album where ID=:ID`, {params:{ID}}).all() }
             default:
@@ -176,6 +251,7 @@ class ResourceDB extends db{
                 query = `insert into MiddleGroup set ID=sequence('mdIDseq').next(), HID=${upperID}, title='New Category'`
                 break;
             case 2:
+                console.log('theme')
                 query = `insert into LowGroup set ID=sequence('loIDseq').next(), MID=${upperID}, title='New Category', designType=0, theme=0`
                 break;
             case 3:

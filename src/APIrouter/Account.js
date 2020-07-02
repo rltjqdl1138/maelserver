@@ -2,8 +2,13 @@ const router = require('express').Router()
 const jwt = require('../Crypto/jwt')
 const db = new (require('../Database/account'))('localhost', 2424, 'Account')
 const axios = require('axios')
-const { json } = require('body-parser')
+const admin = require('firebase-admin');
+const serviceAccount = require('../../security/serviceAccountKey.json')
 
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://mael-play-test.firebaseio.com"
+})
 
 const checkID = (req, res) =>{
     const {id, platform} = req.query;
@@ -80,7 +85,36 @@ const SignupFacebook = async (payload) => {
         return {success:false}
     }
 }
+const SignupGoogle = async({uid, email, displayName, auth})=>{
+    /*
+    console.log(uid)
+    admin.auth().getUser(uid)
+        .then(function(userRecord) {
+        // See the UserRecord reference doc for the contents of userRecord.
+            console.log('Successfully fetched user data:', userRecord.toJSON());
+        })
+        .catch(function(error) {
+            console.log('Error fetching user data:', error);
+        });
+    return {success:false}
+        */
+    
+    admin.auth().verifyIdToken(auth.idToken)
+        .then( decodedToken => {
+            console.log('2')
+            console.log(decodedToken)
+            let uid = decodedToken.uid;
+            console.log(uid)
+            // ...
+        }).catch(function(error) {
+            // Handle error
+            console.log('error')
+            console.log(error)
+        });
+    return {success:false}
+}
 const Signup = (req,res)=>{
+    console.log(req.body.user)
     const {id, password, name, mobile, countryCode, birthday, platform, fbtoken} = req.body;
     const mobileInToken = req.decoded ? req.decoded.mobile : null
     const countryCodeInToken = req.decoded ? req.decoded.countryCode : null
@@ -99,6 +133,8 @@ const Signup = (req,res)=>{
                 result = await SignupFacebook({id, name, fbtoken})
                 break
             case 'google':
+                result = await SignupGoogle(req.body.user)
+                break
             case 'apple':
             default:
                 return res.json({success:false, msg:'platform'})
@@ -124,10 +160,11 @@ const getAccount = async (req, res)=>{
             default:
                 ID = id
         }
+        const date = new Date(user.data.createdTime)
         const payload = {
             id: ID,
-            stateID:user.data.stateID,
-            createDate:'2020-05-30'
+            stateID: user.data.stateID,
+            createDate: `${date.getFullYear()}년 ${date.getMonth()}월 ${date.getDay()}일`
         }
         res.json({success:true, data:payload})
     }

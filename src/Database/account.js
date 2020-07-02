@@ -153,9 +153,10 @@ class AccountDB extends db{
             if(mobile && check.length !== 0)
                 throw Error('overlaped')
             // Create User
+            const nowTime = Date.now()
             const a = await dbSession.command(
-                `Insert into User set UID=sequence('userIDseq').next(), name=:name, mobile=:mobile, countryCode=:countryCode, birthday=:birthday, email=:email, stateID=:stateID`,
-                {params:{name, mobile, countryCode, birthday, email, stateID}}
+                `Insert into User set UID=sequence('userIDseq').next(), name=:name, mobile=:mobile, countryCode=:countryCode, birthday=:birthday, email=:email, stateID=:stateID, createdTime=:nowTime, updatedTime=:nowTime`,
+                {params:{name, mobile, countryCode, birthday, email, stateID, nowTime}}
             ).all()
             console.log(`[Database] Create User ${a[0].UID}`)
             return {success:true, UID:a[0].UID}
