@@ -195,7 +195,7 @@ class ResourceDB extends db{
             case 1:
                 result = dbSession.command(`update MiddleGroup set title=:title, info=:info where ID=:ID`,{params:{ID, ...payload}}).all(); break;
             case 2:
-                result = dbSession.command(`update LowGroup set title=:title, subTitle=:subTitle, designType=:designType, theme=:theme where ID=:ID`,{params:{ID, ...payload}}).all(); break;
+                result = dbSession.command(`update LowGroup set title=:title, subTitle=:subTitle, designType=:designType where ID=:ID`,{params:{ID, ...payload}}).all(); break;
             case 3:
                 result = dbSession.command(`update Album set title=:title, artist=:artist, info=:info, uri=:uri where ID=:ID`,{params:{ID, ...payload}}).all(); break;
             default:
