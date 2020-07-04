@@ -93,7 +93,6 @@ const getCategory = async (req, res)=>{
             return res.json({success:false})
     }
     res.json({success:dbResponse.success, data:payload})
-
 }
 
 const getAlbums = async (req, res)=>{
@@ -244,6 +243,8 @@ const trimMusic = (filename, second=30)=>{
 
 const registerCategory = async(req, res)=>{
     const {group, upperID} = req.body
+    if(group !== 0 && !upperID)
+        return res.json({success:false})
     console.log(`[Media] Register Category: ${group} from ${upperID}`)
     const result = await db.registerCategory(group, upperID)
     res.json(result)
@@ -265,7 +266,16 @@ const deleteCategory = async (req, res)=>{
     res.json(dbResult)
 }
 
+const searchByKeword = async (req, res)=>{
+    const {keyword, property}=req.query
+    const _musics = await db.searchMusic(property ? property : 'keyword', keyword)
+    const _albums = await db.searchAlbum(property ? property : 'keyword', keyword)
+    const musics = _musics.data.map(item=>({MID:item.MID, title:item.title}))
+    const albums = _albums.data.map(item=>({ID:item.ID, title:item.title}))
+    res.json({success:true, data:{musics, albums}})
+}
 
+router.get('/search', searchByKeword)
 router.get('/', basicRouter)
 //router.get('/album', getMusicByAlbum)
 

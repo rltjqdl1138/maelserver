@@ -38,7 +38,17 @@ class ResourceDB extends db{
             const response = await this.dbSession.query(`select * from Music where ${property} LIKE '${keyword}'`).all()
             return {success:true, data:response}
         }catch(e){
-            return {success:false}
+            return {success:false, data:[]}
+        }
+    }
+    searchAlbum = async ( _property, _keyword )=>{
+        try{
+            const property = typeof _property === 'string' ? _property : 'ANY()'
+            const keyword = '%'+_keyword+'%'
+            const response = await this.dbSession.query(`select * from Album where ${property} LIKE '${keyword}'`).all()
+            return {success:true, data:response}
+        }catch(e){
+            return {success:false, data:[]}
         }
     }
     queryMusic = async ( payload )=>{
@@ -197,7 +207,8 @@ class ResourceDB extends db{
             case 2:
                 result = dbSession.command(`update LowGroup set title=:title, subTitle=:subTitle, designType=:designType where ID=:ID`,{params:{ID, ...payload}}).all(); break;
             case 3:
-                result = dbSession.command(`update Album set title=:title, artist=:artist, info=:info, uri=:uri where ID=:ID`,{params:{ID, ...payload}}).all(); break;
+                const keyword = payload.title.replace(/ /gi, "").toLowerCase()
+                result = dbSession.command(`update Album set title=:title, artist=:artist, info=:info, uri=:uri, keyword=:keyword where ID=:ID`,{params:{ID, ...payload, keyword}}).all(); break;
             default:
                 return {success:false}
         }
@@ -251,7 +262,6 @@ class ResourceDB extends db{
                 query = `insert into MiddleGroup set ID=sequence('mdIDseq').next(), HID=${upperID}, title='New Category'`
                 break;
             case 2:
-                console.log('theme')
                 query = `insert into LowGroup set ID=sequence('loIDseq').next(), MID=${upperID}, title='New Category', designType=0, theme=0`
                 break;
             case 3:
@@ -269,9 +279,10 @@ class ResourceDB extends db{
         if(!MID || !title || !category)
             return {success:false}
 
+        const keyword = title.replace(/ /gi, "").toLowerCase()
         const nowTime = Date.now()
-        const query = `Update Music set title=:title, category=:category, info=:info, songCreator=:songCreator, lyricCreator=:lyricCreator, author=:author, publisher=:publisher, updatedTime=:updatedTime where MID=:MID`
-        const result = await dbSession.command(query,{params:{...payload, updatedTime:nowTime}}).all()
+        const query = `Update Music set title=:title, category=:category, info=:info, songCreator=:songCreator, lyricCreator=:lyricCreator, author=:author, publisher=:publisher, updatedTime=:updatedTime, keyword=:keyword where MID=:MID`
+        const result = await dbSession.command(query,{params:{...payload, updatedTime:nowTime, keyword}}).all()
         return {success:true, data:result}
     }
     registerMusic = async(payload)=>{
@@ -280,8 +291,9 @@ class ResourceDB extends db{
         const {title, uri, category} = payload
         if(!title || !uri || !category)
             return {success:false}
-        const query = `Create Vertex Music set MID=sequence('MusicIDseq').next(), title=:title, uri=:uri, category=:category, info=:info, songCreator=:songCreator, lyricCreator=:lyricCreator, author=:author, publisher=:publisher, createdTime=:createdTime, updatedTime=:updatedTime`
-        const result = await dbSession.command(query,{params:{...payload, createdTime:nowTime, updatedTime:nowTime}}).one()
+        const keyword = title.replace(/ /gi, "").toLowerCase()
+        const query = `Create Vertex Music set MID=sequence('MusicIDseq').next(), title=:title, uri=:uri, category=:category, info=:info, songCreator=:songCreator, lyricCreator=:lyricCreator, author=:author, publisher=:publisher, createdTime=:createdTime, updatedTime=:updatedTime, keyword=:keyword`
+        const result = await dbSession.command(query,{params:{...payload, createdTime:nowTime, updatedTime:nowTime, keyword}}).one()
         return {success:true, data:result}
     }
     connectMusicToAlbum = async(MID, albumID)=>{
