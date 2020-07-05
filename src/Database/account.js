@@ -1,7 +1,8 @@
 const db = require('./index')
 const AccountClass = {
     "original":'Account',
-    "facebook":'FBAccount'
+    "facebook":'FBAccount',
+    "google":'GGAccount'
 }
 class AccountDB extends db{
     constructor(host, port, usage){
@@ -130,6 +131,9 @@ class AccountDB extends db{
                     break;
                 case 'facebook':
                     query = `Insert into FBAccount set id=:id, UID=:UID`
+                    break;
+                case 'google':
+                    query = `Insert into GGAccount set id=:id, UID=:UID`
                     break;
                 default:
                     query = null

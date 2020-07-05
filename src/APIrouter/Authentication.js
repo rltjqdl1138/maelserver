@@ -26,7 +26,7 @@ const SignCheck = (req, res)=>{
     }
 }
 const SignIn = (req, res)=>{
-    const {id, password, platform, fbtoken} = req.body;
+    const {id, password, platform, fbtoken, user} = req.body;
     
     //Check id
     if(!id || typeof id !== 'string' || id===''){
@@ -52,7 +52,10 @@ const SignIn = (req, res)=>{
             break
 
         case 'google':
-            //break
+            if(!user || !user.uid)
+                return res.status(400).json({success:false, msg:'uid'})
+            //Need to authentication
+            break
         case 'apple':
             //break
         default:
@@ -91,6 +94,9 @@ const SignIn = (req, res)=>{
                     //console.log('facebook token Authentication error')
                     return res.json({success:false, data : null})
                 }
+                break;
+            case 'google':
+
                 break;
             default:
                 return res.json({success:false, msg:'platform'})

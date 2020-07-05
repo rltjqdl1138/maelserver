@@ -85,36 +85,32 @@ const SignupFacebook = async (payload) => {
         return {success:false}
     }
 }
-const SignupGoogle = async({uid, email, displayName, auth})=>{
-    /*
-    console.log(uid)
-    admin.auth().getUser(uid)
-        .then(function(userRecord) {
-        // See the UserRecord reference doc for the contents of userRecord.
-            console.log('Successfully fetched user data:', userRecord.toJSON());
-        })
-        .catch(function(error) {
-            console.log('Error fetching user data:', error);
-        });
-    return {success:false}
-        */
-    
-    admin.auth().verifyIdToken(auth.idToken)
-        .then( decodedToken => {
-            console.log('2')
-            console.log(decodedToken)
-            let uid = decodedToken.uid;
-            console.log(uid)
-            // ...
-        }).catch(function(error) {
-            // Handle error
-            console.log('error')
-            console.log(error)
-        });
-    return {success:false}
+const SignupGoogle = async({uid, email, displayName})=>{
+    console.log(uid, email, displayName)
+    try{
+        //Check overlaped
+        const check = await db.getAccountByID(uid, 'google')
+        if(!check.success || check.data)
+            throw Error('overlaped')
+
+        // Create User
+        const user = await db.registerUser({name:displayName, email})
+        if(!user.success)
+            throw Error('user')
+
+        // Create Account
+        const account = await db.registerAccount({id:uid, platform:'google', UID:user.UID})
+        if(!account.success)
+            throw Error('Account')
+        
+        // Sign token
+        const token = await jwt.code({id:uid, name:displayName, platform:'google'})
+        return {success:true, id:uid, name:displayName, token}
+    }catch(e){
+        return {success:false, msg:e.message}
+    }
 }
 const Signup = (req,res)=>{
-    console.log(req.body.user)
     const {id, password, name, mobile, countryCode, birthday, platform, fbtoken} = req.body;
     const mobileInToken = req.decoded ? req.decoded.mobile : null
     const countryCodeInToken = req.decoded ? req.decoded.countryCode : null
@@ -132,14 +128,18 @@ const Signup = (req,res)=>{
             case 'facebook':
                 result = await SignupFacebook({id, name, fbtoken})
                 break
+
             case 'google':
+                if(!req.body.user)
+                    return res.json({success:false, msg:'user'})
                 result = await SignupGoogle(req.body.user)
                 break
+
             case 'apple':
             default:
                 return res.json({success:false, msg:'platform'})
         }
-        return res.json({success:result.success, data:result})
+        return res.json(result)
     })()
 }
 
