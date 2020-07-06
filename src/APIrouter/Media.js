@@ -5,12 +5,45 @@ const multiparty = require('multiparty')
 const fs = require('fs')
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffmpeg = require('fluent-ffmpeg');
+
 ffmpeg.setFfmpegPath(ffmpegPath);
 
 const __Resource = __dirname+'/../../resource'
 
 const basicRouter = async (req, res)=>{
-    console.log('basic')
+    const getInfo = (item)=> item.length ? {ID: item[0].ID,title: item[0].title} : {ID:item.ID, title:item.title}
+    const {id} = req.query
+    const album = await db.getAlbumByID(id,3)
+    const low = await db.getAlbumByID(album.data[0].LID, 2)
+    const mid = await db.getAlbumByID(low.data[0].MID, 1)
+    console.log(getInfo(album.data))
+    console.log(getInfo(low.data))
+    console.log(getInfo(mid.data))
+    return res.json({success:true})
+}
+const getSidebar = (req, res)=>{
+    fs.readFile(`${__dirname}/Sidebar`, (err, data)=>{
+        if(err) return res.json({success:false})
+        const list = JSON.parse(data).list
+        return res.json({success:true, data:list})
+    })
+}
+const putSidebar = (req, res)=>{
+    const {list} = req.body
+    fs.writeFile(`${__dirname}/Sidebar`, JSON.stringify({list}), (err)=>{
+        if(err) return res.json({success:false})
+        res.json({success:true})
+    })
+}
+const appendSidebarItem = async (id)=>{
+    const getInfo = (item)=> item.length ? {ID: item[0].ID,title: item[0].title} : {ID:item.ID, title:item.title}
+    
+    const album = await db.getAlbumByID(id,3)
+    const low = await db.getAlbumByID(album.data[0].LID, 2)
+    const mid = await db.getAlbumByID(low.data[0].MID, 1)
+    console.log(getInfo(album.data))
+    console.log(getInfo(low.data))
+    console.log(getInfo(mid.data))
     return res.json({success:true})
 }
 const getTheme = async (req, res)=>{
@@ -286,6 +319,9 @@ router.delete('/category', deleteCategory)
 
 router.get('/theme', getTheme)
 router.put('/theme', updateTheme)
+
+router.get('/sidebar', getSidebar)
+router.put('/sidebar', putSidebar)
 
 router.get('/music', getMusic)
 router.post('/music',registerMusic)

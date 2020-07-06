@@ -100,17 +100,17 @@ class ResourceDB extends db{
     // Sound Data
 
     //Get an Album By its ID
-    getAlbumByID = async(id)=>{
+    getAlbumByID = async(id, group=3)=>{
         const {dbSession} = this
         let album = null
         
         switch(typeof id){
             case 'number':
-                album = await dbSession.query('Select * from Album where ID=:ID',{params:{ID:id}}).all(); break;
+                album = await dbSession.query(`Select * from ${GROUP[group]} where ID=:ID`,{params:{ID:id}}).all(); break;
             case 'string':
-                album = await dbSession.query('Select * from Album where ID=:ID',{params:{ID:id}}).all(); break;
+                album = await dbSession.query(`Select * from ${GROUP[group]} where ID=:ID`,{params:{ID:id}}).all(); break;
             default:
-                album = await dbSession.query('Select * from Album').all()
+                album = await dbSession.query(`Select * from ${GROUP[group]}`).all()
         }
         return {success:true, data:album}
     }

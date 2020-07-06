@@ -12,6 +12,7 @@ admin.initializeApp({
 
 const checkID = (req, res) =>{
     const {id, platform} = req.query;
+    console.log(id, platform)
     if(!id || typeof id !== 'string' || !platform || typeof platform !== 'string')
         return res.json({success:false, msg:'input'});
     (async()=>{
@@ -86,7 +87,6 @@ const SignupFacebook = async (payload) => {
     }
 }
 const SignupGoogle = async({uid, email, displayName})=>{
-    console.log(uid, email, displayName)
     try{
         //Check overlaped
         const check = await db.getAccountByID(uid, 'google')
@@ -97,14 +97,13 @@ const SignupGoogle = async({uid, email, displayName})=>{
         const user = await db.registerUser({name:displayName, email})
         if(!user.success)
             throw Error('user')
-
         // Create Account
         const account = await db.registerAccount({id:uid, platform:'google', UID:user.UID})
         if(!account.success)
             throw Error('Account')
-        
         // Sign token
         const token = await jwt.code({id:uid, name:displayName, platform:'google'})
+        
         return {success:true, id:uid, name:displayName, token}
     }catch(e){
         return {success:false, msg:e.message}
@@ -139,7 +138,8 @@ const Signup = (req,res)=>{
             default:
                 return res.json({success:false, msg:'platform'})
         }
-        return res.json(result)
+        console.log(result)
+        return res.json({success:result.success, data:result})
     })()
 }
 
