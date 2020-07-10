@@ -11,14 +11,6 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 const __Resource = __dirname+'/../../resource'
 
 const basicRouter = async (req, res)=>{
-    const getInfo = (item)=> item.length ? {ID: item[0].ID,title: item[0].title} : {ID:item.ID, title:item.title}
-    const {id} = req.query
-    const album = await db.getAlbumByID(id,3)
-    const low = await db.getAlbumByID(album.data[0].LID, 2)
-    const mid = await db.getAlbumByID(low.data[0].MID, 1)
-    console.log(getInfo(album.data))
-    console.log(getInfo(low.data))
-    console.log(getInfo(mid.data))
     return res.json({success:true})
 }
 const getSidebar = (req, res)=>{
@@ -34,17 +26,6 @@ const putSidebar = (req, res)=>{
         if(err) return res.json({success:false})
         res.json({success:true})
     })
-}
-const appendSidebarItem = async (id)=>{
-    const getInfo = (item)=> item.length ? {ID: item[0].ID,title: item[0].title} : {ID:item.ID, title:item.title}
-    
-    const album = await db.getAlbumByID(id,3)
-    const low = await db.getAlbumByID(album.data[0].LID, 2)
-    const mid = await db.getAlbumByID(low.data[0].MID, 1)
-    console.log(getInfo(album.data))
-    console.log(getInfo(low.data))
-    console.log(getInfo(mid.data))
-    return res.json({success:true})
 }
 const getTheme = async (req, res)=>{
     const {type} = req.query
@@ -265,7 +246,7 @@ const registerMusic = async (req,res)=>{
     form.parse(req);
 }
 
-const trimMusic = (filename, second=30)=>{
+const trimMusic = (filename, second=10)=>{
     ffmpeg(__Resource+'/music/'+filename)
         .inputOptions('-t '+second)
         .output(__Resource+'/sample/'+filename)
