@@ -29,10 +29,10 @@ const SignIn = (req, res)=>{
     const {id, password, platform, fbtoken, user} = req.body;
     
     //Check id
-    if(!id || typeof id !== 'string' || id===''){
-        //console.log(`[Sign In] Fault missing ID`)
+    if(platform === 'google' && user);
+    else if(!id || typeof id !== 'string' || id==='')
         return res.status(400).json({success:false, msg:'ID'})
-    }
+    
     //Check Platform
     switch(platform){
         case 'original':
@@ -54,7 +54,6 @@ const SignIn = (req, res)=>{
         case 'google':
             if(!user || !user.uid)
                 return res.status(400).json({success:false, msg:'uid'})
-            //Need to authentication
             break
         case 'apple':
             //break
@@ -67,7 +66,9 @@ const SignIn = (req, res)=>{
         const hash = password
 
         // Get User data
-        const result = await db.getUserByID(id, platform)
+        const result = platform === 'google' ?
+            await db.getUserByID(user.uid, platform) :
+            await db.getUserByID(id, platform)
         if(!result.success){
             //console.log(`[Sign In] Fault ID:${id} no data`)
             return res.status(400).json(result)
@@ -92,16 +93,18 @@ const SignIn = (req, res)=>{
                     await axios.get(URL)
                 }catch(e){
                     //console.log('facebook token Authentication error')
-                    return res.json({success:false, data : null})
+                    return res.json({success:false, data:null})
                 }
                 break;
             case 'google':
+                if(!user.auth || !user.auth.accessToken || !user.auth.idToken)
+                    return res.json({success:false, data:null})
 
                 break;
             default:
                 return res.json({success:false, msg:'platform'})
         }
-        console.log(`[Sign In] ID:${id} platform:${platform}`)
+        console.log(`[Sign In] ID:${result.data.id} platform:${platform}`)
         return res.json({success:true, data:{...payload, token}})
     })()
 }
