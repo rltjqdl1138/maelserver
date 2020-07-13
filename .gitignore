@@ -9,6 +9,7 @@ lerna-debug.log*
 resource/*
 *.mp3
 *.jpeg
+Sidebar
 
 # Security
 security/*

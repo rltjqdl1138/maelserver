@@ -1,3 +1,4 @@
+#!/usr/bin/env nodemon
 const express = require('express');
 const https = require('https');
 const http = require('http');
