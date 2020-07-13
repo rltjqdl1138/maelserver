@@ -140,7 +140,7 @@ class AccountDB extends db{
             }
             // Create Account
             const account = query ? await dbSession.command(query,{params:{id, password, UID}}).all() : null
-            account ? console.log(`[Database] Create Account on ${platform} : ID:${id}`) : null
+            account ? this.logWithTime(`[Database] Create Account on ${platform} : ID:${id}`) : null
             return {success: true} 
         } catch(e){
             return {success: false}
@@ -162,7 +162,7 @@ class AccountDB extends db{
                 `Insert into User set UID=sequence('userIDseq').next(), name=:name, mobile=:mobile, countryCode=:countryCode, birthday=:birthday, email=:email, stateID=:stateID, createdTime=:nowTime, updatedTime=:nowTime`,
                 {params:{name, mobile, countryCode, birthday, email, stateID, nowTime}}
             ).all()
-            console.log(`[Database] Create User ${a[0].UID}`)
+            this.logWithTime(`[Database] Create User ${a[0].UID}`)
             return {success:true, UID:a[0].UID}
         }catch(e){
             return {success:false}
@@ -176,7 +176,7 @@ class AccountDB extends db{
                 // * Update Account *
                 case 'password':
                     await dbSession.command(`Update Account set ${key}=:value where UID=${UID}`,{params:{value}}).all()
-                    console.log(`[Database] Update Account ${UID}:  <${key}> ${value}`)
+                    this.logWithTime(`[Database] Update Account ${UID}:  <${key}> ${value}`)
                     return {success:true}
 
                 // * Check overlaped *
@@ -188,7 +188,7 @@ class AccountDB extends db{
                     break;
             }
             await dbSession.command(`Update User set ${key}=:value where UID=${UID}`,{params:{value}}).all()
-            console.log(`[Database] Update User ${UID}:  <${key}> ${value}`)
+            this.logWithTime(`[Database] Update User ${UID}:  <${key}> ${value}`)
             return {success:true}
         }catch(e){
             console.log(e)

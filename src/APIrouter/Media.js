@@ -60,7 +60,6 @@ const getTheme = async (req, res)=>{
 
 const updateTheme = async (req, res)=>{
     const {id, method} = req.body
-    console.log(id, method)
     switch(method){
         case 'append':
             await db.registerTheme(id)
@@ -76,6 +75,20 @@ const updateTheme = async (req, res)=>{
             break
     }
     return res.json({success:true})
+}
+const registerMusicLog = async (req, res)=>{
+    try{
+        const id = req.decoded ? req.decoded.id : null
+        const platform = req.decoded ? req.decoded.platform : null
+        const {MID, time, duration} = req.body
+        const _duration = Math.round(duration/1000)
+        const result = await db.registerPlayLog({id, platform}, {MID, time, duration:_duration})
+        db.logWithTime(`[Music Log] ${MID}'th Sound: ${db.secondToString(time)}/${db.secondToString(_duration)}`)
+        return res.json({success: result.success})
+    }catch(e){
+        return res.json({success:false})
+
+    }
 }
 
 const getCategory = async (req, res)=>{
@@ -161,7 +174,7 @@ const updateMusic = async (req, res)=>{
             return;
         }
         const filename = uri+'.mp3'
-        console.log("[Media] Write Music file :" + filename);
+        db.logWithTime("[Media] Write Music file :" + filename);
         payload.uri = uri
 
         const writeStream = fs.createWriteStream('./resource/music/'+filename);
@@ -221,7 +234,7 @@ const registerMusic = async (req,res)=>{
         part.pipe(writeStream);
 
         part.on('end',function(){
-            console.log(`[Music File] ${filename} is uploaded`);
+            db.logWithTime(`[Music File] ${filename} is uploaded`);
             writeStream.end();
         });
     });
@@ -250,8 +263,8 @@ const trimMusic = (filename, second=10)=>{
     ffmpeg(__Resource+'/music/'+filename)
         .inputOptions('-t '+second)
         .output(__Resource+'/sample/'+filename)
-        .on('end', ()=> console.log(`[Music File] ${filename}'s Sample is created`))
-        .on('error',(e)=> console.log(`[Error] ${filename}'s Sample is not Created`))
+        .on('end', ()=> db.logWithTime(`[Music File] ${filename}'s Sample is created`))
+        .on('error',(e)=> db.logWithTime(`[Error] ${filename}'s Sample is not Created`))
         .run()
 }
 
@@ -275,7 +288,7 @@ const updateCategory = async (req, res)=>{
 }
 const deleteCategory = async (req, res)=>{
     const {id, group} = req.query
-    console.log(`[Media] Delete Category: ${id} in ${group}`)
+    db.logWithTime(`[Media] Delete Category: ${id} in ${group}`)
     const dbResult = await db.deleteCategory(id, group)
     res.json(dbResult)
 }
@@ -307,6 +320,10 @@ router.put('/sidebar', putSidebar)
 router.get('/music', getMusic)
 router.post('/music',registerMusic)
 router.post('/music/update',updateMusic)
+
+
+router.use('/music/log', jwt.middleware)
+router.post('/music/log', registerMusicLog)
 
 router.get('/album',getAlbums)
 module.exports = router

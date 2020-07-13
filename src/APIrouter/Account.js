@@ -12,7 +12,6 @@ admin.initializeApp({
 
 const checkID = (req, res) =>{
     const {id, platform} = req.query;
-    console.log(id, platform)
     if(!id || typeof id !== 'string' || !platform || typeof platform !== 'string')
         return res.json({success:false, msg:'input'});
     (async()=>{
@@ -138,7 +137,6 @@ const Signup = (req,res)=>{
             default:
                 return res.json({success:false, msg:'platform'})
         }
-        console.log(result)
         return res.json({success:result.success, data:result})
     })()
 }
@@ -164,7 +162,7 @@ const getAccount = async (req, res)=>{
         const payload = {
             id: ID,
             stateID: user.data.stateID,
-            createDate: `${date.getFullYear()}년 ${date.getMonth()}월 ${date.getDay()}일`
+            createDate: `${date.getFullYear()}년 ${date.getMonth()+1}월 ${date.getDate()}일`
         }
         res.json({success:true, data:payload})
     }

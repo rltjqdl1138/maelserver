@@ -104,7 +104,7 @@ const SignIn = (req, res)=>{
             default:
                 return res.json({success:false, msg:'platform'})
         }
-        console.log(`[Sign In] ID:${result.data.id} platform:${platform}`)
+        db.logWithTime(`[Sign In] ID:${result.data.id} platform:${platform}`)
         return res.json({success:true, data:{...payload, token}})
     })()
 }

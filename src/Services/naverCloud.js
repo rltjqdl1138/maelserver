@@ -56,7 +56,9 @@ exports.MessageService = class MessageService {
         try{
             await axios.post(this.baseURL+this.url, body, {headers:header})
             this.appendKey(countryCode, to, key)
-            console.log(`[Naver Cloud] Message Send: \x1b[97m${countryCode}:${to}\x1b[0m\t${key}`)
+
+            const LogDate = new Date()
+            console.log(`\x1b[96m${LogDate.getFullYear()}.${LogDate.getMonth()+1}.${LogDate.getDate()} ${LogDate.getHours()}:${LogDate.getMinutes()}:${LogDate.getSeconds()}\x1b[0m [Naver Cloud] Message Send: \x1b[97m${countryCode}:${to}\x1b[0m\t${key}`)
             return {success:true, key}
         }catch(e){
             console.log(e.response ? e.response.error : e)
@@ -75,9 +77,10 @@ exports.MessageService = class MessageService {
     }
     deleteKey = (countryCode, mobile, value) =>{
         const key = countryCode+'#'+mobile
+        const LogDate = new Date()
         if(this.checkKey(countryCode, mobile, value)){
             this.keyTable[key] = null
-            console.log(`[Naver Cloud] Delete Key: ${countryCode}:${mobile}`)
+            console.log(`\x1b[96m${LogDate.getFullYear()}.${LogDate.getMonth()+1}.${LogDate.getDate()} ${LogDate.getHours()}:${LogDate.getMinutes()}:${LogDate.getSeconds()}\x1b[0m [Naver Cloud] Delete Key: ${countryCode}:${mobile}`)
         }
     }
 

@@ -136,7 +136,7 @@ class ResourceDB extends db{
                 return {success:false}
             const theme = (await dbSession.query('select * from LowGroup where theme > 0').all()).length+1
             await dbSession.command(`update LowGroup set theme=:theme where ID=:ID`, {params:{ID, theme}}).all()
-            console.log('success')
+            
             return {success:true, data:theme}
         }catch(e){
             return {success:false}
@@ -151,7 +151,7 @@ class ResourceDB extends db{
             await dbSession.command(`update LowGroup set theme=0 where ID=:ID`, {params:{ID}}).all()
             const list = await dbSession.query(`select * from LowGroup where theme > ${pivot.theme}`).all()
             list.map( async(item)=>{
-                console.log(`${item.ID}'s theme ${item.theme}=>${item.theme-1}`)
+                this.logWithTime(`${item.ID}'s theme ${item.theme}=>${item.theme-1}`)
                 await dbSession.command('update LowGroup set theme=:theme where ID=:ID', {params:{theme:item.theme-1, ID:item.ID}})
             })
             return {success:true}
@@ -163,15 +163,13 @@ class ResourceDB extends db{
         const {dbSession} = this
         try{
             const changeOne = await dbSession.query('select theme from LowGroup where ID=:ID',{params:{ID}}).one()
-            console.log(changeOne)
             if(!changeOne || !changeOne.theme)
                 return {success:false}
             const replaceOne = await dbSession.command(`Update LowGroup set theme=${changeOne.theme} where theme=${changeOne.theme+1}`).all()
-            console.log(replaceOne)
+    
             if(!replaceOne.length)
                 return {success:false}
             await dbSession.command(`Update LowGroup set theme=${changeOne.theme-1} where ID=:ID`,{params:{ID}})
-            console.log('done')
             return {success:true}
         }catch(e){
             console.log(e)
@@ -227,21 +225,21 @@ class ResourceDB extends db{
                 if(middle.length)
                     return {success:false}
                 await dbSession.command(`Delete from ${GROUP[group]} where ID=:ID`, {params:{ID}}).all()
-                console.log(`[Database] Delete High Group: ${ID}`)
+                this.logWithTime(`[Database] Delete High Group: ${ID}`)
                 return {success:true}
             case 1:
                 const low = await dbSession.query(`select ID from LowGroup where MID=${ID}`).all()
                 if(low.length)
                     return {success:false}
                 await dbSession.command(`Delete from ${GROUP[group]} where ID=:ID`, {params:{ID}}).all()
-                console.log(`[Database] Delete Middle Group: ${ID}`)
+                this.logWithTime(`[Database] Delete Middle Group: ${ID}`)
                 return {success:true}
             case 2:
                 const album = await dbSession.query(`select ID from Album where LID=${ID}`).all()
                 if(album.length)
                     return {success:false}
                 await dbSession.command(`Delete from ${GROUP[group]} where ID=:ID`, {params:{ID}}).all()
-                console.log(`[Database] Delete Low Group: ${ID}`)
+                this.logWithTime(`[Database] Delete Low Group: ${ID}`)
                 return {success:true}
             case 3:
                 return {success:true, data: await dbSession.command(`Delete Vertex from Album where ID=:ID`, {params:{ID}}).all() }
@@ -297,7 +295,7 @@ class ResourceDB extends db{
         return {success:true, data:result}
     }
     connectMusicToAlbum = async(MID, albumID)=>{
-        console.log(`[Category] Connect ${MID} to ${albumID}`)
+        this.logWithTime(`[Category] Connect ${MID} to ${albumID}`)
         if(typeof MID !== 'number' || typeof albumID !== 'number')
             return {success:false}
         const query = `Create Edge From (Select From Album where ID=${albumID}) TO (Select From Music where MID=${MID})`
@@ -305,14 +303,24 @@ class ResourceDB extends db{
         return {success:true, data:result}
     }
     disconnectMusicToAlbum = async (MID, albumID)=>{
-        console.log(`[Category] Disconnect ${MID} to ${albumID}`)
+        this.logWithTime(`[Category] Disconnect ${MID} to ${albumID}`)
         if(typeof MID !== 'number' || typeof albumID !== 'number')
             return {success:false}
         const query = `Delete EDGE from (Select from Album where ID=${albumID}) to (Select from Music where MID=${MID})`
         const result = await this.dbSession.command(query).all()
         return {success:true, data:result}
     }
-    
+
+    registerPlayLog = async (user, music) => { 
+        const {id, platform} = user
+        const {MID, time, duration} = music
+        if(!id || !MID || !time || !duration)
+            return {success:false}
+        const percentage = (time/duration).toFixed(2)
+        const query = `Insert into PlayLog set uid=:id, MID=:MID, time=:time, duration=:duration, percentage=:percentage, platform=:platform`
+        const result = await this.dbSession.command(query,{params:{id, MID, time, duration, percentage, platform}})
+        return {success:true, data:result}
+    }
 }
 
 
