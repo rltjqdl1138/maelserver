@@ -255,9 +255,20 @@ const resetPassword = async (req, res)=>{
     const result = await db.updateUser(account.data.UID, {key:'password', value:hash})
     return res.json(result)
 }
-
+const getAccountData = async(req,res)=>{
+    let result = []
+    const account = await db.getAccount()
+    const user = await db.getUser()
+    account.data.original.map(item=>result = [...result, {...item, ...user.data[String(item.UID)], platform:'original'}])
+    account.data.facebook.map(item=>result = [...result, {...item, ...user.data[String(item.UID)], platform:'facebook'}])
+    account.data.google.map(item=>result = [...result, {...item, ...user.data[String(item.UID)], platform:'google'}])
+    
+    return res.json({success:true, data:result})
+}
 
 // Need no token
+
+router.get('/',getAccountData)
 router.get('/check/id', checkID)
 router.get('/check/forgetid', checkForgetID)
 

@@ -8,6 +8,26 @@ class AccountDB extends db{
     constructor(host, port, usage){
         super(host, port, usage)
     }
+    getAccount = async (platform)=>{
+        const {dbSession} = this
+        let account
+        if(platform)
+            account = await dbSession.query(`Select * from ${AccountClass[platform]}`).all()
+        else{
+            account = {}
+            account.original = await dbSession.query(`Select * from Account`).all()
+            account.facebook = await dbSession.query(`Select * from FBAccount`).all()
+            account.google = await dbSession.query(`Select * from GGAccount`).all()
+        }
+        return {success:true, data:account}
+    }
+    getUser = async ()=>{
+        const {dbSession} = this
+        const user = await dbSession.query('Select * from User').all()
+        let data = []
+        user.map(item=>{ data[String(item.UID)] = item })
+        return {success:true, data}
+    }
     getAccountByID = async (id, platform)=>{
         const {dbSession} = this
         const account = await dbSession.query(`Select * from ${AccountClass[platform]} where id=:id`,{params:{id}}).all()
