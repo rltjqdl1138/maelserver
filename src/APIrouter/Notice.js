@@ -6,8 +6,14 @@ const BasicNotice = require('./BasicNotice.json')
 const __Resource = __dirname+'/../../resource'
 
 const basic = (req,res)=>{
-    res.json({success:true, title:'Notice',
-        data:BasicNotice.list})
+    fs.readdir(`${__Resource}/notice/`,(err, files)=>{
+        if(err) return res.json({success:false})
+        const result = files.map(item=>{
+            console.log(item)
+            return item
+        })
+        return res.json({success:true, data:result})
+    })
 }
 const getNotice = (req, res)=>{
     const uri = url.parse(req.url).pathname
