@@ -217,15 +217,4 @@ class AccountDB extends db{
     }
 }
 
-/*
-
-create PROPERTY User.UID INTEGER ( MANDATORY TRUE );
-create PROPERTY User.name STRING
-create PROPERTY User.stateID BYTE ( MANDATORY TRUE );
-create PROPERTY User.lastToken STRING;
-create PROPERTY User.mobile STRING;
-create PROPERTY User.countryCode INTEGER
-create PROPERTY User.birthday STRING
-create PROPERTY User.email STRING
-*/
 module.exports = AccountDB
