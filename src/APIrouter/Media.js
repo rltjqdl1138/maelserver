@@ -295,8 +295,10 @@ const deleteCategory = async (req, res)=>{
 
 const searchByKeword = async (req, res)=>{
     const {keyword, property}=req.query
-    const _musics = await db.searchMusic(property ? property : 'keyword', keyword)
-    const _albums = await db.searchAlbum(property ? property : 'keyword', keyword)
+
+    const _keyword = keyword.toLowerCase().replace(/ /gi,"")
+    const _musics = await db.searchMusic(property ? property : 'keyword', _keyword)
+    const _albums = await db.searchAlbum(property ? property : 'keyword', _keyword)
     const musics = _musics.data.map(item=>({MID:item.MID, title:item.title}))
     const albums = _albums.data.map(item=>({ID:item.ID, title:item.title}))
     res.json({success:true, data:{musics, albums}})
