@@ -194,13 +194,34 @@ const getUser = async (req, res)=>{
 const forgetID = async (req, res)=>{
     if(!req.decoded)
         return res.json({success:false})
-    const {name, birthday} = req.query
+    const {name, birthday, id} = req.query
     const {mobile, countryCode} = req.decoded
     const response = await db.getAccountByMobile(mobile, countryCode)
-    if(!response.success || !response.data || !response.data.id)
+
+    // Case 1:
+    // 가입된 정보 없음
+    if(!response.success || !response.data )
+        return res.json({success:false})
+
+    // Case 1-2:
+    // User 정보는 있으나 id가 없음 (Social login)
+    else if(!response.data.id && response.data.name === name && response.data.birthday === birthday)
         return res.json({success:true})
-    else if(response.data.id)
-        return res.json({success:true, id:response.data.id})
+
+    const token = await jwt.code({id:response.data.id, name:response.data.name, platform:'original'})
+
+
+    // Case 2-1:
+    // 아이디 찾기
+    if(response.data.name === name && response.data.birthday === birthday)
+        return res.json({success:true, id:response.data.id, token})
+    
+    // Case 2-2:
+    // 비밀번호 찾기
+    else if(response.data.id === id)
+        return res.json({success:true, id, token})
+
+    // Other cases:
     return res.json({success:false})
 }
 
@@ -241,12 +262,13 @@ const changeInfo = async (req, res)=>{
 
 
 const resetPassword = async (req, res)=>{
+
+    console.log(req.decoded)
     if(!req.decoded)
         return res.json({success:false})
-    const {mobile, countryCode} = req.decoded
-    const {id, password} = req.body
-
-    const account = await db.getAccountByMobile(mobile, countryCode)
+    const {id} = req.decoded
+    const {password} = req.body
+    const account = await db.getAccountByID(id, 'original')
     if(!account.success || !account.data || account.data.id !== id)
         return res.json({success:false})
 

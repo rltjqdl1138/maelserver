@@ -188,6 +188,7 @@ class AccountDB extends db{
             return {success:false}
         }
     }
+    
     updateUser = async(UID, payload)=>{
         const {dbSession} = this
         const {key, value} = payload
