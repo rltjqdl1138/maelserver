@@ -64,12 +64,14 @@ const makeNotice = (req, res)=>{
 }
 const updateNotice = (req, res)=>{
     const uri = url.parse(req.url).pathname
-    const fileurl = `${__Resource}/notice/${uri}`
-    const {title, data} = req.body
-    if(!title || !data)
+    const fileurl = `${__Resource}/notice${uri}`
+    console.log(uri, fileurl)
+    const {title, main} = req.body
+    if(!title || !main)
         return {success:false}
 
-    const dat = {title, list:data}
+    const dat = {title, list:main}
+    console.log(dat)
     fs.writeFile(fileurl,  JSON.stringify(dat), 
         err => res.json(err ? {success:false} : {success:true}))
 }

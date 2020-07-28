@@ -130,12 +130,15 @@ const getAlbums = async (req, res)=>{
 }
 const getMusic = async (req,res)=>{
     const {id, album, title, uri, songCreator, lyricCreator, author, publisher} = req.query
+    let designType = 0
     let dbResponse = {success:false}
-
     switch(false){
         case !id:
             dbResponse = await db.getMusicByID(id); break;
         case !album:
+            const albumData = await db.getAlbumByID(album)
+            const lowGroup = albumData && albumData.success && albumData.data.length ? await db.getAlbumByID(albumData.data[0].LID, 2) : null
+            designType = lowGroup && lowGroup.success && lowGroup.data.length ? lowGroup.data[0].designType : designType
             dbResponse = await db.matchMusicByAlbum(album); break;
         case !title:
             dbResponse = await db.searchMusic('title', title); break
@@ -156,7 +159,7 @@ const getMusic = async (req,res)=>{
         {MID, title, uri, category, songCreator, lyricCreator, author, publisher, info, createdTime, updatedTime}) => ({
         MID, title, uri, category, songCreator, lyricCreator, author, publisher, info, createdTime, updatedTime })) : []
 
-    return res.json({success:dbResponse.success, data})
+    return res.json({success:dbResponse.success, data, designType})
 }
 const updateMusic = async (req, res)=>{
     const form = new multiparty.Form();

@@ -8,6 +8,7 @@ class ResourceDB extends db{
     // Category
     getGroup = async (id, group, type)=>{
         const {dbSession} = this
+        console.log(`[find] ${id} ${group}`)
         if( group===undefined || typeof group !== 'number' || group < 0 || group > 3)
             return {success:false}
         try{
