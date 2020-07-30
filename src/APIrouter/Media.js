@@ -14,7 +14,7 @@ const basicRouter = async (req, res)=>{
     return res.json({success:true})
 }
 const getSidebar = (req, res)=>{
-    fs.readFile(`${__dirname}/Sidebar`, (err, data)=>{
+    fs.readFile(`${__Resource}/Sidebar`, (err, data)=>{
         if(err) return res.json({success:false})
         const list = JSON.parse(data).list
         return res.json({success:true, data:list})
@@ -22,7 +22,7 @@ const getSidebar = (req, res)=>{
 }
 const putSidebar = (req, res)=>{
     const {list} = req.body
-    fs.writeFile(`${__dirname}/Sidebar`, JSON.stringify({list}), (err)=>{
+    fs.writeFile(`${__Resource}/Sidebar`, JSON.stringify({list}), (err)=>{
         if(err) return res.json({success:false})
         res.json({success:true})
     })

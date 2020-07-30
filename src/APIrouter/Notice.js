@@ -41,7 +41,6 @@ const registerPlanNotice = async(req, res)=>{
 
 const getNotice = (req, res)=>{
     const uri = url.parse(req.url).pathname
-    console.log('get notice', url)
     fs.readFile(`${__Resource}/notice/${uri}`,(err, data)=>{
         if(err) return res.json({success:false, title:'Notice', data:BasicNotice.list})
         const result = JSON.parse(data)
@@ -53,7 +52,6 @@ const getNotice = (req, res)=>{
     })
 }
 const makeNotice = (req, res)=>{
-    console.log('Make notice')
     const uri = url.parse(req.url).pathname
     const fileurl = `${__Resource}/notice/${uri}`
     if(fs.existsSync(fileurl))
@@ -62,12 +60,12 @@ const makeNotice = (req, res)=>{
         const dat = {title:'new Notice', list:[]}
         fs.writeFile(fileurl,  JSON.stringify(dat), 
             err => res.json(err ? {success:false} : {success:true}))
+        db.logWithTime(`[Notice] Register Information FILE:${url}`)
     }
 }
 const updateNotice = (req, res)=>{
     const uri = url.parse(req.url).pathname
     const fileurl = `${__Resource}/notice${uri}`
-    console.log(uri, fileurl)
     const {title, main} = req.body
     if(!title || !main)
         return {success:false}
@@ -75,6 +73,7 @@ const updateNotice = (req, res)=>{
     const dat = {title, list:main}
     fs.writeFile(fileurl,  JSON.stringify(dat), 
         err => res.json(err ? {success:false} : {success:true}))
+    console.log(`[Notice] Update Information FILE:${uri} title:${title}`)
 }
 
 const deleteNotice = (req, res)=>{
