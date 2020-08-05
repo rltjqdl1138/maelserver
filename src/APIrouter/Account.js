@@ -262,8 +262,6 @@ const changeInfo = async (req, res)=>{
 
 
 const resetPassword = async (req, res)=>{
-
-    console.log(req.decoded)
     if(!req.decoded)
         return res.json({success:false})
     const {id} = req.decoded
@@ -303,25 +301,3 @@ router.put('/user/*',changeInfo)
 router.get('/forgetid', forgetID)
 router.put('/forgetid', resetPassword)
 module.exports = router
-
-/*
-
-[POST]	/account/original		회원가입
-	(id, password, name, mobile, countryCode, birthday, token)	=>	(token)
-[POST]	/account/facebook		회원가입
-	(id, name, fbtoken)	=>	(token)
-[GET]	/account		정보 조회
-	(type:user / account)	=>	
-[GET]	/account/check
-	( id )		=>	(success)
-[POST]	/account/find
-	(mtoken, name)	=>	(success, id)
-[PUT]	/account/password	비밀번호 변경
-	(password)	=>	(success)
-[PUT]	/account/email	이메일 변경
-	(email)	=>	(success)
-[PUT]	/account/mobile	핸드폰번호 변경
-	(mobile,mtoken)	=>	(success)
-[PUT]	/account/birthday	생년월일 변경
-	(birthday)	=>	(success)
-*/
