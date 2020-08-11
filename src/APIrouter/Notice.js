@@ -38,7 +38,14 @@ const registerPlanNotice = async(req, res)=>{
     const result = await db.registerNotice(title, main)
     return res.json(result)
 }
-
+const getPrivacy = (req, res)=>{
+    fs.readFile(`${__Resource}/notice/privacy.html`, (err, data)=>{
+        if(err) return res.status(404).end()
+        res.writeHeader(200, {"Content-Type": "text/html"});  
+        res.write(data);  
+        res.end();
+    })
+}
 const getNotice = (req, res)=>{
     const uri = url.parse(req.url).pathname
     fs.readFile(`${__Resource}/notice/${uri}`,(err, data)=>{
@@ -84,7 +91,7 @@ const deleteNotice = (req, res)=>{
 router.get('/',basic)
 router.post('/',registerPlanNotice)
 
-
+router.get('/privacy', getPrivacy)
 router.get('/*', getNotice)
 router.post('/*', makeNotice)
 router.put('/*', updateNotice)
