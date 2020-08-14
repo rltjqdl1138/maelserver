@@ -11,9 +11,7 @@ const basic = (req,res)=>{
     page === undefined ? 
         fs.readdir(`${__Resource}/notice/`,(err, files)=>{
             if(err) return res.json({success:false})
-            const result = files.map(item=>{
-                return item
-            })
+            const result = files.reduce((rest, item) => item.includes('.') ? rest : [...rest, item], [] )
             return res.json({success:true, data:result})
         }):
         getPlanNoticeList(req, res)
