@@ -2,7 +2,8 @@ const db = require('./index')
 const AccountClass = {
     "original":'Account',
     "facebook":'FBAccount',
-    "google":'GGAccount'
+    "google":'GGAccount',
+    "apple":'APAccount'
 }
 class AccountDB extends db{
     constructor(host, port, usage){
@@ -18,6 +19,7 @@ class AccountDB extends db{
             account.original = await dbSession.query(`Select * from Account`).all()
             account.facebook = await dbSession.query(`Select * from FBAccount`).all()
             account.google = await dbSession.query(`Select * from GGAccount`).all()
+            account.apple = await dbSession.query(`Select * from APAccount`).all()
         }
         return {success:true, data:account}
     }
@@ -154,6 +156,9 @@ class AccountDB extends db{
                     break;
                 case 'google':
                     query = `Insert into GGAccount set id=:id, UID=:UID`
+                    break;
+                case 'apple':
+                    query = `Insert into APAccount set id=:id, UID=:UID`
                     break;
                 default:
                     query = null

@@ -108,6 +108,33 @@ const SignupGoogle = async({uid, email, displayName})=>{
         return {success:false, msg:e.message}
     }
 }
+const SignupApple = async({identityToken, user, email, fullName})=>{
+    try{
+        //Check overlaped
+        const check = await db.getAccountByID(user, 'apple')
+        console.log(check)
+        if(!check.success || check.data)
+            throw Error('overlaped')
+        const name = fullName.givenName ? fullName.givenName : ''
+        console.log(name)
+        // Create User
+        const User = await db.registerUser({name, email})
+        console.log(User)
+        if(!User.success)
+            throw Error('user')
+        // Create Account
+        const account = await db.registerAccount({id:user, platform:'apple', UID:User.UID})
+        console.log(account)
+        if(!account.success)
+            throw Error('Account')
+        // Sign token
+        const token = await jwt.code({id:user, name, platform:'apple'})
+        
+        return {success:true, id:user, name, token}
+    }catch(e){
+        return {success:false, msg:e.message}
+    }
+}
 const Signup = (req,res)=>{
     const {id, password, name, mobile, countryCode, birthday, platform, fbtoken} = req.body;
     const mobileInToken = req.decoded ? req.decoded.mobile : null
@@ -134,6 +161,10 @@ const Signup = (req,res)=>{
                 break
 
             case 'apple':
+                if(!req.body.user)
+                    return res.json({success:false, msg:'user'})
+                result = await SignupApple(req.body.user)
+                break
             default:
                 return res.json({success:false, msg:'platform'})
         }

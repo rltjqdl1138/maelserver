@@ -30,6 +30,7 @@ const SignIn = (req, res)=>{
     
     //Check id
     if(platform === 'google' && user);
+    else if(platform === 'apple' && user);
     else if(!id || typeof id !== 'string' || id==='')
         return res.status(400).json({success:false, msg:'ID'})
     
@@ -51,12 +52,15 @@ const SignIn = (req, res)=>{
             }
             break
 
+        case 'apple':
+            if(!user || !user.user)
+                return res.status(400).json({success:false, msg:'uid'})
+            break
+
         case 'google':
             if(!user || !user.uid)
                 return res.status(400).json({success:false, msg:'uid'})
             break
-        case 'apple':
-            //break
         default:
             //console.log(`[Sign In] Fault ID:${id} missing platform`)
             return res.status(400).json({success:false, msg:'platform'})
@@ -66,9 +70,13 @@ const SignIn = (req, res)=>{
         const hash = password
 
         // Get User data
-        const result = platform === 'google' ?
-            await db.getUserByID(user.uid, platform) :
-            await db.getUserByID(id, platform)
+        let result;
+        if(platform === 'google')
+            result= await db.getUserByID(user.uid, platform) 
+        else if(platform === 'apple')
+            result= await db.getUserByID(user.user, platform) 
+        else
+            result = await db.getUserByID(id, platform) 
         if(!result.success){
             //console.log(`[Sign In] Fault ID:${id} no data`)
             return res.status(400).json(result)
@@ -99,9 +107,15 @@ const SignIn = (req, res)=>{
             case 'google':
                 if(!user.auth || !user.auth.accessToken || !user.auth.idToken)
                     return res.json({success:false, data:null})
-
                 break;
+            case 'apple':
+                console.log(user.identityToken)
+                if(!user.identityToken || !user.user )
+                    return res.json({success:false, data:null})
+                break;
+
             default:
+                if(!user.authentication)
                 return res.json({success:false, msg:'platform'})
         }
         db.logWithTime(`[Sign In] ID:${result.data.id} platform:${platform}`)
