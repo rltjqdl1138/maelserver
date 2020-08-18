@@ -89,7 +89,7 @@ const deleteNotice = (req, res)=>{
 router.get('/',basic)
 router.post('/',registerPlanNotice)
 
-router.get('/privacy', getPrivacy)
+router.get('/privacy.html', getPrivacy)
 router.get('/*', getNotice)
 router.post('/*', makeNotice)
 router.put('/*', updateNotice)
