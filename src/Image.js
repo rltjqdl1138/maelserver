@@ -38,6 +38,7 @@ const uploadImageFile = async(req,res)=>{
 
 const getImageByURI = async (req, res)=>{
     const uri = url.parse(req.url).pathname
+    console.log(uri)
     try{
         const path = await checkFileAsync(uri)
         streamFile(res, path)
@@ -46,6 +47,21 @@ const getImageByURI = async (req, res)=>{
         return res.status(404).send('not found')
     }
 }
+const getBannerURIs = (req, res)=>{
+
+    return res.json({success:true, uri:`/image/banner/sample.jpeg`})
+}
+const getBannerByURI = async (req, res)=>{
+    const uri = url.parse(req.url).pathname
+    try{
+        const path = await checkFileAsync(uri)
+        streamFile(res, path)
+    }catch(e){
+        console.log(e)
+        return res.status(404).send('not found')
+    }
+}
+
 
 const streamFile = (res, path) =>{
     const stream = fs.createReadStream(path)
@@ -61,7 +77,8 @@ const checkFileAsync = (uri) => new Promise((resolve, reject) =>{
     const dir = __dirname+"/../resource/image"+uri
     fs.stat(dir, (err,stats) => err ? reject(err) : resolve(dir) )
 })
-
+router.get('/banner', getBannerURIs)
+router.get('/banner/*', getBannerByURI)
 router.post('/',uploadImageFile)
 router.get('/', base)
 router.get('/*', getImageByURI)

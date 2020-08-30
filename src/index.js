@@ -8,5 +8,4 @@ router.get('/',(req, res)=>res.json({msg:'welcom mael'}))
 router.use('/api', APIRouter )
 router.use('/music', Music)
 router.use('/image', Image)
-
 module.exports = router

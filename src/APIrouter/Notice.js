@@ -44,6 +44,14 @@ const getPrivacy = (req, res)=>{
         res.end();
     })
 }
+const getUsage = (req, res)=>{
+    fs.readFile(`${__Resource}/notice/usage.html`, (err, data)=>{
+        if(err) return res.status(404).end()
+        res.writeHeader(200, {"Content-Type": "text/html"});  
+        res.write(data);  
+        res.end();
+    })
+}
 const getNotice = (req, res)=>{
     const uri = url.parse(req.url).pathname
     fs.readFile(`${__Resource}/notice/${uri}`,(err, data)=>{
@@ -89,6 +97,7 @@ const deleteNotice = (req, res)=>{
 router.get('/',basic)
 router.post('/',registerPlanNotice)
 
+router.get('/usage.html', getUsage)
 router.get('/privacy.html', getPrivacy)
 router.get('/*', getNotice)
 router.post('/*', makeNotice)
