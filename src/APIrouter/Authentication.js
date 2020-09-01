@@ -82,7 +82,7 @@ const SignIn = (req, res)=>{
             return res.status(400).json(result)
         }
         // Create JWT
-        const payload = result.data ? {id:result.data.id, name:result.data.name, platform} : null
+        const payload = result.data ? {id:result.data.id, name:result.data.name, state:result.data.stateID, platform} : null
         const token = payload ? await jwt.code(payload) : null
         if(!token)
             return res.json({success:false})
@@ -118,6 +118,7 @@ const SignIn = (req, res)=>{
                 if(!user.authentication)
                 return res.json({success:false, msg:'platform'})
         }
+        console.log(payload)
         db.logWithTime(`[Sign In] ID:${result.data.id} platform:${platform}`)
         return res.json({success:true, data:{...payload, token}})
     })()
