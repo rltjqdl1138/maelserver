@@ -290,7 +290,18 @@ const changeInfo = async (req, res)=>{
     const result = await db.updateUser(account.data.UID, {key, value})
     return res.json(result)
 }
+const deleteUser = async(req, res)=>{
+    if(!req.decoded)
+        return res.json({success:false})
+    const {id, platform} = req.decoded
+    const {reason} = req.body
 
+    const account = await db.getAccountByID(id, platform)
+    if(!account.success || !account.data)
+        return res.json({success:false})
+    await db.deleteUser(account.data.UID, platform, reason)
+    res.json({success:true})
+}
 
 const resetPassword = async (req, res)=>{
     if(!req.decoded)
@@ -302,7 +313,6 @@ const resetPassword = async (req, res)=>{
         return res.json({success:false})
 
     const hash = password
-    //todo: hashing
     const result = await db.updateUser(account.data.UID, {key:'password', value:hash})
     return res.json(result)
 }
@@ -328,6 +338,7 @@ router.use('/*', jwt.middleware)
 router.post('/register', Signup)
 router.get('/account',getAccount)
 router.get('/user',getUser)
+router.post('/delete',deleteUser)
 router.put('/user/*',changeInfo)
 router.get('/forgetid', forgetID)
 router.put('/forgetid', resetPassword)

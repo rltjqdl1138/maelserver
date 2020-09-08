@@ -37,6 +37,9 @@ class dbModel{
         return `${this.formating(min)}:${this.formating(second)}`
     }
     formating=(number) => `${number < 10 ? '0':''}${number}`
+    rawQuery = (query, params) => this.dbSession.query(query, {params})
+
+    
 }
 
 module.exports = dbModel

@@ -6,7 +6,7 @@ const {MessageService} = require('../Services/naverCloud')
 const CountryCodeList = require('./CountryCode.json')
 const message = new MessageService()
 
-const SignCheck = (req, res)=>{
+const SignCheck = async (req, res)=>{
     switch(true){
         case !req.decoded:
         case !req.token:
@@ -22,7 +22,9 @@ const SignCheck = (req, res)=>{
             return res.status(400).json({success:false, msg:'this token is not for sign check'})
 
         default:
-            return res.json({success:true})
+            const {success, data} = await db.getUserByID(req.decoded.id, req.decoded.platform)
+            console.log(data)
+            return success && data ? res.json({success:true, name:data.name, platform:data.platform}) : res.json({success:false})
     }
 }
 const SignIn = (req, res)=>{
