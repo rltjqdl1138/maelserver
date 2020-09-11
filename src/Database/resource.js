@@ -311,14 +311,16 @@ class ResourceDB extends db{
         return {success:true, data:result}
     }
 
-    registerPlayLog = async (user, music) => { 
+    registerPlayLog = async (user, music) => {
         const {id, platform} = user
         const {MID, time, duration} = music
         if(!id || !MID || !time || !duration)
             return {success:false}
+
+        const createdAt = String(Date.now())
         const percentage = (time/duration).toFixed(2)
-        const query = `Insert into PlayLog set uid=:id, MID=:MID, time=:time, duration=:duration, percentage=:percentage, platform=:platform`
-        const result = await this.dbSession.command(query,{params:{id, MID, time, duration, percentage, platform}})
+        const query = `Insert into PlayLog set uid=:id, MID=:MID, time=:time, duration=:duration, percentage=:percentage, platform=:platform, createdAt=:createdAt`
+        const result = await this.dbSession.command(query,{params:{id, MID, time, duration, percentage, platform, createdAt}}).one()
         return {success:true, data:result}
     }
 }

@@ -76,6 +76,7 @@ const updateTheme = async (req, res)=>{
     }
     return res.json({success:true})
 }
+
 const registerMusicLog = async (req, res)=>{
     try{
         const id = req.decoded ? req.decoded.id : null
@@ -158,7 +159,6 @@ const getMusic = async (req,res)=>{
     const data = dbResponse.success && dbResponse.data.length > 0 ? dbResponse.data.map((
         {MID, title, uri, category, songCreator, lyricCreator, author, publisher, info, createdTime, updatedTime}) => ({
         MID, title, uri, category, songCreator, lyricCreator, author, publisher, info, createdTime, updatedTime })) : []
-
     return res.json({success:dbResponse.success, data, designType})
 }
 const updateMusic = async (req, res)=>{
