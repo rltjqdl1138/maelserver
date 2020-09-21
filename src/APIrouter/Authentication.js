@@ -23,8 +23,7 @@ const SignCheck = async (req, res)=>{
 
         default:
             const {success, data} = await db.getUserByID(req.decoded.id, req.decoded.platform)
-            console.log(data)
-            return success && data ? res.json({success:true, name:data.name, platform:data.platform}) : res.json({success:false})
+            return success && data ? res.json({success:true, name:data.name, platform:data.platform, state:data.StateID}) : res.json({success:false})
     }
 }
 const SignIn = (req, res)=>{

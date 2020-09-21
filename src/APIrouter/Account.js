@@ -53,7 +53,7 @@ const SignupOriginal = async ({id, password, name, mobile, countryCode, birthday
         
         // Sign token
         const token = await jwt.code({id, name, platform:'original'})
-        return {success:true, id, name, token, stateID:0}
+        return {success:true, id, name, token, state:0}
     }catch(e){
         return {success:false, msg:e}
     }
@@ -79,7 +79,7 @@ const SignupFacebook = async (payload) => {
         
         // Sign token
         const token = await jwt.code({id, name, platform:'facebook'})
-        return {success:true, id, name, token, stateID:0}
+        return {success:true, id, name, token, state:0}
     }catch(e){
         console.log(e)
         return {success:false}
@@ -103,7 +103,7 @@ const SignupGoogle = async({uid, email, displayName})=>{
         // Sign token
         const token = await jwt.code({id:uid, name:displayName, platform:'google'})
         
-        return {success:true, id:uid, name:displayName, token, stateID:0}
+        return {success:true, id:uid, name:displayName, token, state:0}
     }catch(e){
         return {success:false, msg:e.message}
     }
@@ -130,7 +130,7 @@ const SignupApple = async({identityToken, user, email, fullName})=>{
         // Sign token
         const token = await jwt.code({id:user, name, platform:'apple'})
         
-        return {success:true, id:user, name, token, stateID:0}
+        return {success:true, id:user, name, token, state:0}
     }catch(e){
         return {success:false, msg:e.message}
     }

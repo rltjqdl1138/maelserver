@@ -11,7 +11,14 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 const __Resource = __dirname+'/../../resource'
 
 const basicRouter = async (req, res)=>{
-    return res.json({success:true})
+    const bitrate = '320k'
+    ffmpeg(__Resource+'/music/1st.wav')
+        .audioBitrate(bitrate)
+        .output(__Resource+`/sample/${String(bitrate)}.wav`)
+        .on('end', ()=> db.logWithTime(`${String(bitrate)} done`))
+        .on('error',(e)=> db.logWithTime(`not Created`))
+        .run()
+    return res.json({success:true, msg:'hello'})
 }
 const getSidebar = (req, res)=>{
     fs.readFile(`${__Resource}/Sidebar`, (err, data)=>{
@@ -261,6 +268,12 @@ const registerMusic = async (req,res)=>{
 
     form.parse(req);
 }
+const deleteMusic = async(req, res)=>{
+    if(!req.query.id)
+        res.json({success:false})
+    const dbResult = await db.deleteMusic(req.query.id)
+    res.json({success:true})
+}
 
 const trimMusic = (filename, second=10)=>{
     ffmpeg(__Resource+'/music/'+filename)
@@ -325,6 +338,7 @@ router.put('/sidebar', putSidebar)
 router.get('/music', getMusic)
 router.post('/music',registerMusic)
 router.post('/music/update',updateMusic)
+router.delete('/music',deleteMusic)
 
 
 router.use('/music/log', jwt.middleware)
