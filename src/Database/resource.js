@@ -183,7 +183,6 @@ class ResourceDB extends db{
             if(!changeOne || !changeOne.theme===undefined)
                 return {success:false}
             const replaceOne = await dbSession.command(`Update LowGroup set theme=${changeOne.theme} where theme=${changeOne.theme+1}`).one()
-            console.log(replaceOne)
             if(!replaceOne.count)
                 return {success:false}
             await dbSession.command(`Update LowGroup set theme=${changeOne.theme+1} where ID=:ID`,{params:{ID}}).one()

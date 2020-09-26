@@ -53,12 +53,11 @@ const getTheme = async (req, res)=>{
             resultList[item.LID].list = [...resultList[item.LID].list, payload]
     })
     const completeList = await groupList.map(item =>{
-        const {ID, title, subTitle, designType} = item
+        const {ID, title, subTitle, designType, theme} = item
         if(!resultList[ID] || !resultList[ID].list)
-            return {ID, title, subTitle, designType, list:[]}
-        return {ID, title, subTitle, designType, list:resultList[ID].list}
+            return {ID, title, subTitle, designType, list:[], theme}
+        return {ID, title, subTitle, designType, list:resultList[ID].list, theme}
     })
-
     res.json({
         success:true,
         result: completeList
