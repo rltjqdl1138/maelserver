@@ -163,30 +163,30 @@ class ResourceDB extends db{
         const {dbSession} = this
         try{
             const changeOne = await dbSession.query('select theme from LowGroup where ID=:ID',{params:{ID}}).one()
+
             if(!changeOne || !changeOne.theme)
                 return {success:false}
-            const replaceOne = await dbSession.command(`Update LowGroup set theme=${changeOne.theme} where theme=${changeOne.theme+1}`).all()
-    
-            if(!replaceOne.length)
+            const replaceOne = await dbSession.command(`Update LowGroup set theme=${changeOne.theme} where theme=${changeOne.theme-1}`).one()
+            if(!replaceOne.count)
                 return {success:false}
-            await dbSession.command(`Update LowGroup set theme=${changeOne.theme-1} where ID=:ID`,{params:{ID}})
+            await dbSession.command(`Update LowGroup set theme=${changeOne.theme-1} where ID=:ID`,{params:{ID}}).one()
             return {success:true}
         }catch(e){
             console.log(e)
             return {success:false}
         }
     }
-
     moveDownTheme = async ( ID )=>{
         const {dbSession} = this
         try{
             const changeOne = await dbSession.query('select theme from LowGroup where ID=:ID',{params:{ID}}).one()
-            if(!changeOne || !changeOne.theme)
+            if(!changeOne || !changeOne.theme===undefined)
                 return {success:false}
-            const replaceOne = await dbSession.command(`Update LowGroup set theme=${changeOne.theme} where theme=${changeOne.theme-1}`).all()
-            if(!replaceOne.length)
+            const replaceOne = await dbSession.command(`Update LowGroup set theme=${changeOne.theme} where theme=${changeOne.theme+1}`).one()
+            console.log(replaceOne)
+            if(!replaceOne.count)
                 return {success:false}
-            await dbSession.command(`Update LowGroup set theme=${changeOne.theme+1} where ID=:ID`,{params:{ID}})
+            await dbSession.command(`Update LowGroup set theme=${changeOne.theme+1} where ID=:ID`,{params:{ID}}).one()
             return {success:true}
         }catch(e){
             console.log(e)
