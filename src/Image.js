@@ -17,6 +17,11 @@ const base = async (req, res) => {
 const uploadImageFile = async(req,res)=>{
     const form = new multiparty.Form();
     const nowTime = Date.now()
+
+    form.on('error', (err)=>{
+        console.log(`[Error] form on err`)
+        console.log(err)
+    })
     form.on('part', (part)=>{
         if(!part.filename || part.filename === ''){
             part.resume()
