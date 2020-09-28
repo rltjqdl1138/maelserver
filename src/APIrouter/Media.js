@@ -241,7 +241,7 @@ const registerMusic = async (req,res)=>{
         const writeStream = fs.createWriteStream(__Resource+'/music/'+filename);
         writeStream.filename = filename
         part.pipe(writeStream);
-
+        part.error()
         part.on('end',function(){
             db.logWithTime(`[Music File] ${filename} is uploaded`);
             writeStream.end();
@@ -271,7 +271,14 @@ const deleteMusic = async(req, res)=>{
     if(!req.query.id)
         res.json({success:false})
     const dbResult = await db.deleteMusic(req.query.id)
+    db.logWithTime(`[Music] ${dbResult[0].MID}:${dbResult[0].title} is deleted`)
     res.json({success:true})
+}
+const deleteMusics = async(req, res)=>{
+    const {list} = req.body
+    list.map( async(item)=>{ await db.deleteMusic(item) })
+    res.json({success:true})
+
 }
 
 const trimMusic = (filename, second=10)=>{
@@ -337,6 +344,7 @@ router.put('/sidebar', putSidebar)
 router.get('/music', getMusic)
 router.post('/music',registerMusic)
 router.post('/music/update',updateMusic)
+router.post('/music/delete',deleteMusics)
 router.delete('/music',deleteMusic)
 
 

@@ -16,12 +16,14 @@ const base = async (req, res) => {
 }
 const uploadImageFile = async(req,res)=>{
     const form = new multiparty.Form();
+    const nowTime = Date.now()
     form.on('part', (part)=>{
-        const filename = part.filename.replace(/ /gi,"")
-        if(!filename || filename===''){
+        if(!part.filename || part.filename === ''){
             part.resume()
             return;
         }
+        const filename = part.filename && typeof part.filename === 'string' ? part.filename.replace(/ /gi,"") : 'Image'+String(nowTime)
+        console.log(`Upload image... ${part.filename} => ${filename}`)
 
         const writeStream = fs.createWriteStream(`${__Resource}/image/${filename}`);
         writeStream.filename = filename
@@ -38,7 +40,6 @@ const uploadImageFile = async(req,res)=>{
 
 const getImageByURI = async (req, res)=>{
     const uri = url.parse(req.url).pathname
-    console.log(uri)
     try{
         const path = await checkFileAsync(uri)
         streamFile(res, path)
@@ -48,7 +49,6 @@ const getImageByURI = async (req, res)=>{
     }
 }
 const getBannerURIs = (req, res)=>{
-
     return res.json({success:true, uri:`/image/banner/sample.jpeg`})
 }
 const getBannerByURI = async (req, res)=>{

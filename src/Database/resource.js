@@ -295,8 +295,9 @@ class ResourceDB extends db{
     }
     deleteMusic = async(MID)=>{
         const {dbSession}=this
-        const result = await dbSession.command(`DELETE VERTEX Music where MID=:MID`,{params:{MID}}).one()
-        return {success:true}
+        const result = await dbSession.query('Select * from Music where MID=:MID',{params:{MID}}).all()
+        await dbSession.command(`DELETE VERTEX Music where MID=:MID`,{params:{MID}}).one()
+        return {success:true, result}
     }
     connectMusicToAlbum = async(MID, albumID)=>{
         this.logWithTime(`[Category] Connect ${MID} to ${albumID}`)
