@@ -241,7 +241,6 @@ const registerMusic = async (req,res)=>{
         const writeStream = fs.createWriteStream(__Resource+'/music/'+filename);
         writeStream.filename = filename
         part.pipe(writeStream);
-        part.error()
         part.on('end',function(){
             db.logWithTime(`[Music File] ${filename} is uploaded`);
             writeStream.end();
