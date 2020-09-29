@@ -264,7 +264,9 @@ const registerMusic = async (req,res)=>{
     form.on('progress',(byteRead,byteExpected)=>{
         //console.log(' Reading total  '+byteRead+'/'+byteExpected);
     });
-
+    form.on('error', (err)=>{
+        console.log(err)
+    })
     form.parse(req);
 }
 const deleteMusic = async(req, res)=>{
