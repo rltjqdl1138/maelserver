@@ -2,13 +2,30 @@ const router = require('express').Router()
 const jwt = require('../Crypto/jwt')
 const db = new (require('../Database/account'))('localhost', 2424, 'Account')
 const axios = require('axios')
+const iap = require('in-app-purchase')
 const admin = require('firebase-admin');
 const serviceAccount = require('../../security/serviceAccountKey.json')
-
+console.log(iap)
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: "https://mael-play-test.firebaseio.com"
 })
+// https://www.appypie.com/faqs/how-can-i-get-shared-secret-key-for-in-app-purchase
+iap.config({
+    // If you want to exclude old transaction, set this to true. Default is false:
+    appleExcludeOldTransactions: true,
+    // this comes from iTunes Connect (You need this to valiate subscriptions):
+    applePassword: '64eecba0d0ef4c17bc41a22f23a52f49',
+  /*
+    googleServiceAccount: {
+      clientEmail: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      privateKey: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY,
+    },
+  */
+    /* Configurations all platforms */
+    test: true, // For Apple and Google Play to force Sandbox validation only
+    // verbose: true, // Output debug logs to stdout stream
+  });
 
 const checkID = (req, res) =>{
     const {id, platform} = req.query;
@@ -168,6 +185,7 @@ const Signup = (req,res)=>{
             default:
                 return res.json({success:false, msg:'platform'})
         }
+        console.log(result)
         return res.json({success:result.success, data:result})
     })()
 }
@@ -264,7 +282,7 @@ const changeInfo = async (req, res)=>{
     const key = req.url.split('/')[2]
     let value = req.body[key]
 
-    const account = await db.getAccountByID(id, platform)
+    const account = await db.getUserByID(id, platform)
     if(!account.success || !account.data)
         return res.json({success:false})
 
@@ -284,7 +302,72 @@ const changeInfo = async (req, res)=>{
             
             value = value
             break;
+        case 'subscription':
+            console.log("get start")
+            console.log(Number(new Date()))
+            let newState = 0;
+            if(!req.body || !req.body.purchase)
+                return res.status(400).end()
+            const purchase = req.body.purchase
+            const appType = 'ios'
+            const receipt = appType === 'ios' ? purchase.transactionReceipt : {
+                packageName: androidPackageName,
+                productId: purchase.productId,
+                purchaseToken: purchase.purchaseToken,
+                subscription: true,
+            };
+            const app = 'ios'
 
+            await iap.setup()
+            const validationResponse = await iap.validate(receipt);
+            //assert((app === 'android' && validationResponse.service === 'google')
+            //        || (app === 'ios' && validationResponse.service === 'apple'));
+            
+            const purchaseData = iap.getPurchaseData(validationResponse);
+            const firstPurchaseItem = purchaseData[0];
+
+            const isCancelled = iap.isCanceled(firstPurchaseItem);
+            const isExpired = iap.isExpired(firstPurchaseItem);
+            const { productId } = firstPurchaseItem;
+            const originalTransactionId = app === 'ios' ? firstPurchaseItem.originalTransactionId : firstPurchaseItem.transactionId;
+            const latestReceipt = app === 'ios' ? validationResponse.latest_receipt : JSON.stringify(receipt);
+            const startDate = app === 'ios' ? new Date(firstPurchaseItem.originalPurchaseDateMs) : new Date(parseInt(firstPurchaseItem.startTimeMillis, 10));
+            const endDate = app === 'ios' ? new Date(firstPurchaseItem.expiresDateMs) : new Date(parseInt(firstPurchaseItem.expiryTimeMillis, 10));
+            let environment = '';
+            // validationResponse contains sandbox: true/false for Apple and Amazon
+            // Android we don't know if it was a sandbox account
+            if (app === 'ios') {
+              environment = validationResponse.sandbox ? 'sandbox' : 'production';
+            }
+            if(isCancelled){
+                console.log('cancel')
+                console.log(isCancelled)
+                return res.json({})
+            }
+            if(isExpired){
+                console.log('expire')
+                console.log(isExpired)
+                // Update expired
+                newState = 0
+            }
+            const lastSubscribe = await db.getReceiptsByOriginalTransactionId(originalTransactionId)
+            if(!lastSubscribe){
+                const result = await db.createReceipt({app, isExpired, isCancelled, productId, originalTransactionId, latestReceipt, startDate, endDate, validationResponse:JSON.stringify(validationResponse), userId:account.data.UID })
+                if(!result)
+                    return res.json({})
+                if(productId === 'YearlySubscribe')
+                    newState=3
+                else if(productId === 'MonthlySubscribe')
+                    newState=2
+            }else{
+                if(productId === 'YearlySubscribe')
+                    newState=3
+                else if(productId === 'MonthlySubscribe')
+                    newState=2
+            }
+            await db.updateUser(account.data.UID, {key:'stateID', value:newState})
+            const token = await jwt.code({id:account.data.id, name:account.data.name, state:newState, platform})
+            return res.json({success:true, token})
         default:
     }
     const result = await db.updateUser(account.data.UID, {key, value})

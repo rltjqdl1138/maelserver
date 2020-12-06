@@ -23,7 +23,9 @@ const SignCheck = async (req, res)=>{
 
         default:
             const {success, data} = await db.getUserByID(req.decoded.id, req.decoded.platform)
-            return success && data ? res.json({success:true, name:data.name, platform:data.platform, state:data.StateID}) : res.json({success:false})
+            console.log(success)
+            console.log(data)
+            return success && data ? res.json({success:true, name:data.name, platform:req.decoded.platform, state:data.StateID}) : res.json({success:false})
     }
 }
 const SignIn = (req, res)=>{
@@ -110,7 +112,6 @@ const SignIn = (req, res)=>{
                     return res.json({success:false, data:null})
                 break;
             case 'apple':
-                console.log(user.identityToken)
                 if(!user.identityToken || !user.user )
                     return res.json({success:false, data:null})
                 break;
@@ -119,7 +120,6 @@ const SignIn = (req, res)=>{
                 if(!user.authentication)
                 return res.json({success:false, msg:'platform'})
         }
-        console.log(payload)
         db.logWithTime(`[Sign In] ID:${result.data.id} platform:${platform}`)
         return res.json({success:true, data:{...payload, token}})
     })()
@@ -137,7 +137,8 @@ const messageCheck = (req, res)=>{
     (async()=>{
         const codeCheck = countryCode && CountryCodeList[countryCode] ? countryCode : '82'
         const token = message.checkKey(codeCheck, mobile, key) ? await jwt.code({mobile, countryCode:codeCheck}) : null
-        return res.json({success: token?true:false, token})
+        const user = await db.getUserByMobile(mobile, codeCheck)
+        return res.json({success: token?true:false, token, overlaped:user&&user.data?true:false})
     })()
 }
 

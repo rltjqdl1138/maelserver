@@ -225,9 +225,9 @@ class AccountDB extends db{
                 default:
                     break;
             }
-            await dbSession.command(`Update User set ${key}=:value where UID=${UID}`,{params:{value}}).all()
+            const result = await dbSession.command(`Update User set ${key}=:value where UID=${UID}`,{params:{value}}).all()
             this.logWithTime(`[Database] Update User ${UID}:  <${key}> ${value}`)
-            return {success:true}
+            return {success:true, result}
         }catch(e){
             console.log(e)
             return {success:false}
@@ -248,6 +248,18 @@ class AccountDB extends db{
         }catch(e){
             console.log(e)
         }
+    }
+    getReceiptsByOriginalTransactionId = async (id)=>{
+        return (await this.dbSession.query('Select * From Subscription where originalTransactionId=:id',{params:{id}}).one())
+    }
+    createReceipt = async(payload)=>{
+        try{
+            await this.dbSession.command(`INSERT INTO Subscription SET app=:app, userId=:userId, originalTransactionId=:originalTransactionId, validationResponse=:validationResponse, latestReceipt=:latestReceipt, startDate=:startDate, endDate=:endDate, isCancelled=:isCancelled, productId=:productId, isExpired=:isExpired`,{params:payload}).one()
+            return true
+        }catch(e){
+            console.log(e)
+            return false
+        }  
     }
 }
 

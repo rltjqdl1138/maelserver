@@ -24,6 +24,7 @@
     "express": "^4.17.1",
     "firebase-admin": "^8.13.0",
     "fluent-ffmpeg": "^2.1.2",
+    "in-app-purchase": "^1.11.4",
     "jsonwebtoken": "^8.5.1",
     "multer": "^1.4.2",
     "multiparty": "^4.2.1",
