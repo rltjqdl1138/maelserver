@@ -1,11 +1,22 @@
 const router = require('express').Router()
+const jsonwebtoken = require('jsonwebtoken')
 const jwt = require('../Crypto/jwt')
 const db = new (require('../Database/account'))('localhost', 2424, 'Account')
+const fs = require('fs')
 const axios = require('axios')
 const iap = require('in-app-purchase')
 const admin = require('firebase-admin');
+const AppleAuth = require( 'apple-auth');
 const serviceAccount = require('../../security/serviceAccountKey.json')
-console.log(iap)
+
+const appleConfig = {
+    client_id: 'com.mael.maelplay',
+    team_id: 'U8ML489FM8',  // TEAM
+    key_id: '273V4UQMDW',   // KEY
+    redirect_uri: 'https://apple-auth.example.com/auth',
+    scope: 'name',
+  };
+const appleAuth = new AppleAuth(appleConfig, fs.readFileSync(__dirname+'/../../AuthKey_273V4UQMDW.p8').toString(), 'text');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: "https://mael-play-test.firebaseio.com"
@@ -125,23 +136,24 @@ const SignupGoogle = async({uid, email, displayName})=>{
         return {success:false, msg:e.message}
     }
 }
-const SignupApple = async({identityToken, user, email, fullName})=>{
+const SignupApple = async({authorizationCode, user, fullName})=>{
     try{
         //Check overlaped
         const check = await db.getAccountByID(user, 'apple')
-        console.log(check)
+        const response = await appleAuth.accessToken(authorizationCode);
+        if(!response || !response.success)
+            throw Error('apple')
+        const idToken = await jsonwebtoken.decode(response.id_token);
         if(!check.success || check.data)
             throw Error('overlaped')
-        const name = fullName.givenName ? fullName.givenName : ''
-        console.log(name)
+        const name = fullName.givenName || idToken.name || ''
         // Create User
+        const email = idToken.email
         const User = await db.registerUser({name, email})
-        console.log(User)
         if(!User.success)
             throw Error('user')
         // Create Account
         const account = await db.registerAccount({id:user, platform:'apple', UID:User.UID})
-        console.log(account)
         if(!account.success)
             throw Error('Account')
         // Sign token
